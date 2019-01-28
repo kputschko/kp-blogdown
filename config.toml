@@ -1,4 +1,4 @@
-baseurl = "/"
+baseurl = "https://kputschko.netlify.com/"
 languageCode = "en-us"
 title = "Kevin Putschko, ExploreR"
 theme = "hugo-tanka"
