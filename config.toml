@@ -1,6 +1,6 @@
 baseurl = "https://kputschko.netlify.com/"
 languageCode = "en-us"
-title = "Kevin Putschko, ExploreR"
+title = "Putschko + R"
 theme = "hugo-tanka"
 googleAnalytics = ""
 disqusShortname = ""
@@ -10,14 +10,25 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
     post = "/:year/:month/:day/:slug/"
 
 [[menu.main]]
-    name = "Kevin Putschko"
+    name = "Home"
+    url = "/"
+    weight = 1
+[[menu.main]]
+    name = "About"
     url = "/about/"
+    weight = 2
+[[menu.main]]
+    name = "|"
+    weight = 3
 [[menu.main]]
     name = "GitHub"
     url = "https://github.com/kputschko"
 [[menu.main]]
     name = "Twitter"
     url = "https://twitter.com/kputschko"
+[[menu.main]]
+    name = "LinkedIn"
+    url = "https://www.linkedin.com/in/kevinputschko/"
 
 [params]
     description = "A website built through Hugo and blogdown."
