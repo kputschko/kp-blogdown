@@ -21,5 +21,6 @@ mtcars %>%
   geom_density(fill = "lightblue") + 
   theme_minimal() + 
   labs(title = "MTCARS", subtitle = "MPG")
+
 ```
 
