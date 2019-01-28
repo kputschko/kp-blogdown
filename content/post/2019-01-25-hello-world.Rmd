@@ -1,0 +1,25 @@
+---
+title: Hello World!
+author: Kevin Putschko
+date: '2019-01-25'
+categories:
+  - R
+tags:
+  - test
+slug: hello-world
+---
+
+**Stay tuned!**
+
+This is the first post of my blog!  Here I will discuss my adventures into the world of Data Science and R.  
+
+```{r plot-test, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(tidyverse)
+mtcars %>% 
+  ggplot() + 
+  aes(x = mpg) + 
+  geom_density(fill = "lightblue") + 
+  theme_minimal() + 
+  labs(title = "MTCARS", subtitle = "MPG")
+```
+
