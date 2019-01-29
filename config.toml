@@ -5,6 +5,7 @@ theme = "hugo-tanka"
 googleAnalytics = ""
 disqusShortname = ""
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
+paginate = 10
 
 [permalinks]
     post = "/:year/:month/:day/:slug/"

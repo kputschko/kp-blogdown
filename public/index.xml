@@ -6,10 +6,19 @@
     <description>Recent content on Putschko &#43; R</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 25 Jan 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 28 Jan 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Data Science Resources</title>
+      <link>/2019/01/28/data-science-resources/</link>
+      <pubDate>Mon, 28 Jan 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/01/28/data-science-resources/</guid>
+      <description>I’ve been using R since 2013. In those days, R information was hard to come by. Information and best practices that did exist were kept under heavy guard. Most requests for help online were met with gate-keeping responses such as, “Did you read the help file?” or the classic, “Hey, I have a question”, followed by, “Never mind, I solved it - please delete”.</description>
+    </item>
     
     <item>
       <title>About</title>
