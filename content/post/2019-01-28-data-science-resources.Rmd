@@ -18,27 +18,27 @@ library(stringr)
 library(tibble)
 library(DT)
 
-tribble(~Type, ~Title, ~Link,
-        "Book", "R For Data Science", "http://r4ds.had.co.nz/",
-        "Forum", "StackOverflow", "https://stackoverflow.com/questions/tagged/r",
-        "Blog", "R Bloggers", "https://www.r-bloggers.com/",
-        "Book", "Happy Git with R", "http://happygitwithr.com/index.html",
-        "Book", "Tidy Text Mining", "https://www.tidytextmining.com/index.html",
-        "Book", "Advanced R", "https://adv-r.hadley.nz/",
-        "Book", "R Packages", "http://r-pkgs.had.co.nz/",
-        "Forum", "RStudio Community", "https://community.rstudio.com/",
-        "Blog", "RStudio Blog", "https://blog.rstudio.com/",
-        "Blog", "Tidyverse Blog", "https://www.tidyverse.org/articles/",
-        "Twitter", "#rstats", "https://twitter.com/hashtag/rstats?vertical=default&src=hash",
-        "Twitter", "Hadley Wickham", "https://twitter.com/hadleywickham",
-        "Resource", "ggplot2", "http://ggplot2.tidyverse.org/reference/",
-        "Resource", "Jenny Bryan: Stat 545", "http://stat545.com/topics.html",
-        "Blog", "What is a Data Scientist", "https://gist.github.com/hadley/820f09ded347c62c2864",
-        "Book", "Data Visualization: A Practical Introduction", "https://socviz.co/index.html#preface"
+tribble(~Type, ~Title, ~Link, ~Notes,
+        "Book", "R For Data Science", "http://r4ds.had.co.nz/", "Introductory look at R and data science",
+        "Forum", "StackOverflow", "https://stackoverflow.com/questions/tagged/r", "A place to seek answers to all of your R questions",
+        "Blog", "R Bloggers", "https://www.r-bloggers.com/", "A way to keep up to date on the latest R blog posts from around the web",
+        "Book", "Happy Git with R", "http://happygitwithr.com/index.html", "How to get started using GitHub to track the changes of your R scripts",
+        "Book", "Tidy Text Mining", "https://www.tidytextmining.com/index.html", "Introductory look at R and text mining",
+        "Book", "Advanced R", "https://adv-r.hadley.nz/", "An in-depth look at R",
+        "Book", "R Packages", "http://r-pkgs.had.co.nz/", "How to create an R package, so all of your scripts can travel with you",
+        "Forum", "RStudio Community", "https://community.rstudio.com/", "A place to discuss R, RStudio, Shiny, and the Tidyverse",
+        "Blog", "RStudio Blog", "https://blog.rstudio.com/", "Stay up to date on the latest from RStudio",
+        "Blog", "Tidyverse Blog", "https://www.tidyverse.org/articles/", "Stay up to date on the latest from the Tidyverse",
+        "Twitter", "#rstats", "https://twitter.com/hashtag/rstats?vertical=default&src=hash", "See what Twitter is saying about R and stats",
+        "Twitter", "Hadley Wickham", "https://twitter.com/hadleywickham", "See what Hadley is saying and sharing about R",
+        "Resource", "ggplot2", "http://ggplot2.tidyverse.org/reference/", "See how to use ggplot2 to build charts",
+        "Resource", "Jenny Bryan: Stat 545", "http://stat545.com/topics.html", "Jenny Bryan walks us through R, stats, and data science",
+        "Blog", "What is a Data Scientist", "https://gist.github.com/hadley/820f09ded347c62c2864", "This is a bit old, but a good summary of how anyone can be a data scientist",
+        "Book", "Data Visualization: A Practical Introduction", "https://socviz.co/index.html#preface", "An intro to data viz with R"
         ) %>% 
   mutate(Title = str_glue("<a href='{Link}'> {Title} </a>")) %>% 
   arrange(Type) %>% 
-  select(Type, Title) %>% 
+  select(Type, Title, Notes) %>% 
   DT::datatable(escape = FALSE)
   
 
