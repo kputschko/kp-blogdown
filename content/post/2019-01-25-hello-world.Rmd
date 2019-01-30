@@ -14,8 +14,7 @@ slug: hello-world
 This is the first post of my blog!  Here I will discuss my adventures into the world of Data Science and R.  
 
 ```{r plot-test, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
-library(tibble)
-library(ggplot2)
+library(tidyverse)
 
 mtcars %>% 
   ggplot() + 

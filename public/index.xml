@@ -2,30 +2,30 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Putschko &#43; R</title>
-    <link>/</link>
+    <link>https://kputschko.netlify.com/</link>
     <description>Recent content on Putschko &#43; R</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 28 Jan 2019 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://kputschko.netlify.com/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Data Science Resources</title>
-      <link>/2019/01/28/data-science-resources/</link>
+      <link>https://kputschko.netlify.com/2019/01/28/data-science-resources/</link>
       <pubDate>Mon, 28 Jan 2019 00:00:00 +0000</pubDate>
       
-      <guid>/2019/01/28/data-science-resources/</guid>
+      <guid>https://kputschko.netlify.com/2019/01/28/data-science-resources/</guid>
       <description>I’ve been using R since 2013. In those days, R information was hard to come by. Information and best practices that did exist were kept under heavy guard. Most requests for help online were met with gate-keeping responses such as, “Did you read the help file?” or the classic, “Hey, I have a question”, followed by, “Never mind, I solved it - please delete”.</description>
     </item>
     
     <item>
       <title>About</title>
-      <link>/about/</link>
+      <link>https://kputschko.netlify.com/about/</link>
       <pubDate>Fri, 25 Jan 2019 00:00:00 +0000</pubDate>
       
-      <guid>/about/</guid>
+      <guid>https://kputschko.netlify.com/about/</guid>
       <description> My name is Kevin Putschko. I&amp;rsquo;m a consulting data scientist with Experis in Kalamazoo, MI. I&amp;rsquo;m proficient in R and all things tidyverse.
 Find Me Online  GitHub
  Twitter
@@ -36,20 +36,20 @@ Find Me Online  GitHub
     
     <item>
       <title>Hello World!</title>
-      <link>/2019/01/25/hello-world/</link>
+      <link>https://kputschko.netlify.com/2019/01/25/hello-world/</link>
       <pubDate>Fri, 25 Jan 2019 00:00:00 +0000</pubDate>
       
-      <guid>/2019/01/25/hello-world/</guid>
+      <guid>https://kputschko.netlify.com/2019/01/25/hello-world/</guid>
       <description>Stay tuned!
 This is the first post of my blog! Here I will discuss my adventures into the world of Data Science and R.</description>
     </item>
     
     <item>
       <title></title>
-      <link>/about/</link>
+      <link>https://kputschko.netlify.com/about/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>/about/</guid>
+      <guid>https://kputschko.netlify.com/about/</guid>
       <description>Aboutcode{white-space: pre;}pre:not([class]) {background-color: white;}if (window.hljs) {hljs.configure({languages: []});hljs.initHighlightingOnLoad();if (document.readyState &amp;&amp; document.readyState === &#34;complete&#34;) {window.setTimeout(function() { hljs.initHighlighting(); }, 0);}}h1 {font-size: 34px;}h1.title {font-size: 38px;}h2 {font-size: 30px;}h3 {font-size: 24px;}h4 {font-size: 18px;}h5 {font-size: 16px;}h6 {font-size: 12px;}.</description>
     </item>
     
