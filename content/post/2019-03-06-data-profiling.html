@@ -1,0 +1,265 @@
+---
+title: Data Profiling
+author: Kevin Putschko
+date: '2019-03-06'
+slug: data-profiling
+categories: []
+tags: []
+---
+
+
+
+<p>When I’m starting a new project, I typically have no idea what is present in a data set, and I don’t know enough about the project to formulate reasonable questions for the keepers of the data. So I’m usually running an identical set of processes on every new data set I come across.</p>
+<p>I’ve discovered the <a href="https://github.com/boxuancui/DataExplorer">DataExplorer</a> package for R recently, which aims to assist in this process of shining a light into the cavern of unknown data. I think this is a great place to start, but I’m interested in making my own tweaks.</p>
+<p>So follow me, if you will, as I explore some of my ideas about exploring data formulating questions.</p>
+<pre class="r"><code>pacman::p_load(tidyverse, DataExplorer, kp.helpers, scales, corrplot, RColorBrewer, knitr, broom, ggfortify)
+
+data_raw &lt;- iris
+# data_raw &lt;- read_csv(&quot;https://raw.githubusercontent.com/frm1789/landslide-ea/master/global_landslide_catalog_export.csv&quot;)</code></pre>
+<p>One of the many convenience functions I like in DataExplorer is the the <code>introduce()</code> function. It quickly gives us a view of the dimensions and byte size of the data frame.</p>
+<pre class="r"><code>data_raw %&gt;% 
+  introduce() %&gt;% 
+  mutate_at(vars(-memory_usage), comma) %&gt;% 
+  mutate_at(vars(memory_usage), number_bytes) %&gt;% 
+  gather(measure, value) %&gt;% 
+  knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">measure</th>
+<th align="left">value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">rows</td>
+<td align="left">150</td>
+</tr>
+<tr class="even">
+<td align="left">columns</td>
+<td align="left">5</td>
+</tr>
+<tr class="odd">
+<td align="left">discrete_columns</td>
+<td align="left">1</td>
+</tr>
+<tr class="even">
+<td align="left">continuous_columns</td>
+<td align="left">4</td>
+</tr>
+<tr class="odd">
+<td align="left">all_missing_columns</td>
+<td align="left">0</td>
+</tr>
+<tr class="even">
+<td align="left">total_missing_values</td>
+<td align="left">0</td>
+</tr>
+<tr class="odd">
+<td align="left">complete_rows</td>
+<td align="left">150</td>
+</tr>
+<tr class="even">
+<td align="left">total_observations</td>
+<td align="left">750</td>
+</tr>
+<tr class="odd">
+<td align="left">memory_usage</td>
+<td align="left">8 Kb</td>
+</tr>
+</tbody>
+</table>
+<p>To complement this view of the data, I’ve created a function to summarize the columns within the data. This function can be found by running <code>pak::pkg_install("kputschko/kp.helpers")</code> to install it from my GitHub account. In this table, we have the column names, types, number of missing values, number of distinct values, percent missing, min, max, mean, and sd of each column.</p>
+<pre class="r"><code>data_summary &lt;- 
+  data_raw %&gt;% 
+  kp.helpers::fx_describe(output_format = &quot;numeric&quot;)
+
+data_summary %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">column_name</th>
+<th align="left">column_type</th>
+<th align="right">n</th>
+<th align="right">n_missing</th>
+<th align="right">pct_missing</th>
+<th align="right">n_distinct</th>
+<th align="right">min</th>
+<th align="right">max</th>
+<th align="right">mean</th>
+<th align="right">sd</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Sepal.Length</td>
+<td align="left">numeric</td>
+<td align="right">150</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">35</td>
+<td align="right">4.3</td>
+<td align="right">7.9</td>
+<td align="right">5.843333</td>
+<td align="right">0.8280661</td>
+</tr>
+<tr class="even">
+<td align="left">Sepal.Width</td>
+<td align="left">numeric</td>
+<td align="right">150</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">23</td>
+<td align="right">2.0</td>
+<td align="right">4.4</td>
+<td align="right">3.057333</td>
+<td align="right">0.4358663</td>
+</tr>
+<tr class="odd">
+<td align="left">Petal.Length</td>
+<td align="left">numeric</td>
+<td align="right">150</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">43</td>
+<td align="right">1.0</td>
+<td align="right">6.9</td>
+<td align="right">3.758000</td>
+<td align="right">1.7652982</td>
+</tr>
+<tr class="even">
+<td align="left">Petal.Width</td>
+<td align="left">numeric</td>
+<td align="right">150</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">22</td>
+<td align="right">0.1</td>
+<td align="right">2.5</td>
+<td align="right">1.199333</td>
+<td align="right">0.7622377</td>
+</tr>
+<tr class="odd">
+<td align="left">Species</td>
+<td align="left">factor</td>
+<td align="right">150</td>
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">3</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
+<p>Going a bit further, we can then get a visual for the number of missing values for each column. From this plot, we will be able to see which columns we should inquire about, which ones are likely to cause issues within statistical analysis, and which we might need to drop altogether.</p>
+<pre class="r"><code>data_missing &lt;- 
+  data_summary %&gt;% 
+  select(column_name, pct_missing) %&gt;% 
+  filter(pct_missing &gt; 0) %&gt;% 
+  arrange(pct_missing)
+  
+data_missing %&gt;% 
+  ggplot(aes(x = reorder(column_name, pct_missing), y = pct_missing, fill = pct_missing)) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_viridis_c(guide = &quot;none&quot;) +
+  labs(y = &quot;Percent Missing&quot;, x = &quot;Column&quot;, title = &quot;Missing Data&quot;, 
+       subtitle = ifelse(nrow(data_missing) &gt; 0, NULL, &quot;Note: There is no missing data in this dataframe!&quot;)) +
+  theme_kp()</code></pre>
+<p><img src="/post/2019-03-06-data-profiling_files/figure-html/summary-1.png" width="672" /></p>
+<p>After this brief overview of the data, I’ll want to begin exploring the relationships between the columns. We start with a simple correlation analysis. This is where any automatic reporting causes trouble for me. DataExplorer has a nice function, <code>plot_correlation()</code>, to get a quick view of correlation, but it quickly becomes illegible as the number of columns increases.</p>
+<p>I like the offerings of the <a href="https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html">corrplot</a> package, as it offers a bit more flexibility. However, there are still issues when we have a large number of columns.</p>
+<p>I would like to continue exploring ways to visualize a larger amount of columns.</p>
+<pre class="r"><code>data_cor_all &lt;- data_raw %&gt;% dummify() %&gt;% cor() 
+
+# data_cor_all_long &lt;- 
+#   data_cor_all %&gt;% 
+#   as_tibble(rownames = &quot;col_x&quot;) %&gt;%
+#   gather(col_y, cor, -col_x) %&gt;%
+#   mutate_at(vars(cor), ~ ifelse(. == 0, NA, .)) %&gt;% 
+#   filter(abs(cor) &gt; 0) 
+
+data_cor_all %&gt;% 
+  corrplot(
+    tl.col = &quot;black&quot;,
+    type = &quot;upper&quot;, 
+    # tl.pos = &quot;n&quot;,
+    col = brewer.pal(n = 8, name = &quot;RdYlBu&quot;),
+    order = &quot;AOE&quot;
+  )</code></pre>
+<p><img src="/post/2019-03-06-data-profiling_files/figure-html/correlation-1.png" width="672" /></p>
+<p>Now that we’ve taken a look at one-to-one correlations between two variables, let’s take a look at Principal Components Analysis to see how groups of variables may correlate with each other.</p>
+<p>This plot can be challenging to interpret. Basically, variables that share a 90-degree angle have 0 correlation. If the angle is &lt; 90, then the variables are positively correlated. If the angle is &gt; 90, then the variables are negatively correlated. So, when you see a group of variables clustered together, they are likely to have a high positive correlation.</p>
+<pre class="r"><code>data_pca &lt;- data_raw %&gt;% dummify() %&gt;% prcomp(scale = TRUE, center = TRUE)
+
+data_pca_summary &lt;- 
+  data_pca %&gt;% 
+  tidy(matrix = &quot;pcs&quot;) %&gt;% 
+  select(PC, percent) %&gt;% 
+  filter(PC %in% 1:2) %&gt;% 
+  deframe() %&gt;% 
+  map_chr(percent, accuracy = 0.01)
+
+data_pca %&gt;% 
+  tidy(matrix = &quot;variables&quot;) %&gt;%
+  filter(PC %in% c(1:2)) %&gt;%
+  mutate(PC = str_c(&quot;PC&quot;, PC)) %&gt;%
+  spread(PC, value) %&gt;%
+  ggplot(aes(x = PC1, y = PC2, label = column)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_segment(aes(x = 0, y = 0, xend = PC1, yend = PC2)) +
+  geom_text(check_overlap = TRUE, nudge_y = 0.10) +
+  theme_kp() +
+  labs(title = &quot;Principal Component Bi-Plot&quot;,
+       caption = &quot;If Percent of Variance Explained by PC1 + PC2 is &gt; 80%, then this will be a trustworthy plot.\nOtherwise, more exploration of the components will be necessary.&quot;) +
+  scale_x_continuous(labels = NULL, 
+                     limits = c(-1, 1),
+                     name = str_glue(&quot;PC1 ({data_pca_summary[1]})&quot;)) +
+  scale_y_continuous(labels = NULL,
+                     limits = c(-1, 1),
+                     name = str_glue(&quot;PC2 ({data_pca_summary[2]})&quot;))</code></pre>
+<p><img src="/post/2019-03-06-data-profiling_files/figure-html/pca-1.png" width="672" /></p>
+<p>And finally, I’ll look at how the rows cluster together. Again this will get messy with a large amount of data, but it’s fine for now. As with the note above for PCA, if the two PC values do not sum to &gt; 80%, then we should spend some more time exploring the clustering.</p>
+<pre class="r"><code>data_raw_cluster &lt;- data_raw %&gt;% dummify() %&gt;% scale()
+
+# Determine optimal number of clusters
+data_cluster &lt;-
+  tibble(k = 1:20) %&gt;%
+  mutate(kclust = map(k, ~kmeans(data_raw_cluster, .x)),
+         glance = map(kclust, glance)) %&gt;%
+  unnest(glance) %&gt;%
+  arrange(k) %&gt;%
+  mutate(rate = 100 * (tot.withinss - lag(tot.withinss)) / lag(tot.withinss)) %&gt;%
+  mutate(mark_potential = ifelse(rate &lt; lag(rate), 1, 0)) %&gt;%
+  group_by(mark_potential) %&gt;%
+  mutate(mark_count = sequence(n()),
+         recommended_clusters = ifelse(mark_potential == 1 &amp; mark_count == 1, k, NA)) %&gt;%
+  ungroup() %&gt;%
+  select(k, tot.withinss, recommended_clusters, kclust)
+
+# Create graph for optimal number of clusters
+# data_cluster %&gt;%
+#   ggplot(aes(x = k, y = tot.withinss)) +
+#   geom_point() +
+#   geom_line() +
+#   geom_vline(aes(xintercept = recommended_clusters, color = &quot;red&quot;)) +
+#   theme_kp() +
+#   guides(color = &quot;none&quot;) +
+#   scale_x_continuous(breaks = 1:20)
+
+plot_cluster &lt;- 
+  data_cluster %&gt;% 
+  filter(!is.na(recommended_clusters)) %&gt;% 
+  mutate(plot_kmeans = map(kclust, 
+                           ~autoplot(., data_raw_cluster, frame = TRUE, frame.type = &quot;norm&quot;) + 
+                             labs(title = &quot;PCA - Clusters&quot;) +
+                             theme_kp()))
+
+plot_cluster$plot_kmeans[[1]]</code></pre>
+<p><img src="/post/2019-03-06-data-profiling_files/figure-html/cluster-1.png" width="672" /></p>
+<p>And that’s it! That’s my proposal for a first step into data profiling. I would like to build this out into a Shiny App, with interactive graphs to allow for exploration of histograms, bars, scatter plots of each variable.</p>
+<p>Feel free to shoot me an email at <a href="mailto:kputschko@gmail.com" class="email">kputschko@gmail.com</a>, and the code will be available GitHub page.</p>

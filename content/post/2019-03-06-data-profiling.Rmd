@@ -1,0 +1,176 @@
+---
+title: Data Profiling
+author: Kevin Putschko
+date: '2019-03-06'
+slug: data-profiling
+categories: []
+tags: []
+---
+
+When I'm starting a new project, I typically have no idea what is present in a data set, and I don't know enough about the project to formulate reasonable questions for the keepers of the data.  So I'm usually running an identical set of processes on every new data set I come across.  
+
+I've discovered the [DataExplorer](https://github.com/boxuancui/DataExplorer) package for R recently, which aims to assist in this process of shining a light into the cavern of unknown data.  I think this is a great place to start, but I'm interested in making my own tweaks.
+
+So follow me, if you will, as I explore some of my ideas about exploring data formulating questions.
+
+```{r prep, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+pacman::p_load(tidyverse, DataExplorer, kp.helpers, scales, corrplot, RColorBrewer, knitr, broom, ggfortify)
+
+data_raw <- iris
+# data_raw <- read_csv("https://raw.githubusercontent.com/frm1789/landslide-ea/master/global_landslide_catalog_export.csv")
+
+```
+
+One of the many convenience functions I like in DataExplorer is the the `introduce()` function.  It quickly gives us a view of the dimensions and byte size of the data frame.  
+
+```{r introduce, echo=TRUE}
+data_raw %>% 
+  introduce() %>% 
+  mutate_at(vars(-memory_usage), comma) %>% 
+  mutate_at(vars(memory_usage), number_bytes) %>% 
+  gather(measure, value) %>% 
+  knitr::kable()
+```
+
+To complement this view of the data, I've created a function to summarize the columns within the data.  This function can be found by running `pak::pkg_install("kputschko/kp.helpers")` to install it from my GitHub account.  In this table, we have the column names, types, number of missing values, number of distinct values, percent missing, min, max, mean, and sd of each column.  
+
+```{r bytes, paged.print=TRUE}
+data_summary <- 
+  data_raw %>% 
+  kp.helpers::fx_describe(output_format = "numeric")
+
+data_summary %>% kable()
+```
+
+Going a bit further, we can then get a visual for the number of missing values for each column.  From this plot, we will be able to see which columns we should inquire about, which ones are likely to cause issues within statistical analysis, and which we might need to drop altogether.
+
+```{r summary}
+data_missing <- 
+  data_summary %>% 
+  select(column_name, pct_missing) %>% 
+  filter(pct_missing > 0) %>% 
+  arrange(pct_missing)
+  
+data_missing %>% 
+  ggplot(aes(x = reorder(column_name, pct_missing), y = pct_missing, fill = pct_missing)) +
+  geom_col() +
+  coord_flip() +
+  scale_fill_viridis_c(guide = "none") +
+  labs(y = "Percent Missing", x = "Column", title = "Missing Data", 
+       subtitle = ifelse(nrow(data_missing) > 0, NULL, "Note: There is no missing data in this dataframe!")) +
+  theme_kp()
+```
+
+After this brief overview of the data, I'll want to begin exploring the relationships between the columns.  We start with a simple correlation analysis.  This is where any automatic reporting causes trouble for me.  DataExplorer has a nice function, `plot_correlation()`, to get a quick view of correlation, but it quickly becomes illegible as the number of columns increases.  
+
+I like the offerings of the [corrplot](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html) package, as it offers a bit more flexibility.  However, there are still issues when we have a large number of columns.  
+
+I would like to continue exploring ways to visualize a larger amount of columns.
+
+```{r correlation}
+data_cor_all <- data_raw %>% dummify() %>% cor() 
+
+# data_cor_all_long <- 
+#   data_cor_all %>% 
+#   as_tibble(rownames = "col_x") %>%
+#   gather(col_y, cor, -col_x) %>%
+#   mutate_at(vars(cor), ~ ifelse(. == 0, NA, .)) %>% 
+#   filter(abs(cor) > 0) 
+
+data_cor_all %>% 
+  corrplot(
+    tl.col = "black",
+    type = "upper", 
+    # tl.pos = "n",
+    col = brewer.pal(n = 8, name = "RdYlBu"),
+    order = "AOE"
+  )
+
+```
+
+Now that we've taken a look at one-to-one correlations between two variables, let's take a look at Principal Components Analysis to see how groups of variables may correlate with each other.  
+
+This plot can be challenging to interpret.  Basically, variables that share a 90-degree angle have 0 correlation.  If the angle is < 90, then the variables are positively correlated.  If the angle is > 90, then the variables are negatively correlated.  So, when you see a group of variables clustered together, they are likely to have a high positive correlation.  
+
+```{r pca}
+data_pca <- data_raw %>% dummify() %>% prcomp(scale = TRUE, center = TRUE)
+
+data_pca_summary <- 
+  data_pca %>% 
+  tidy(matrix = "pcs") %>% 
+  select(PC, percent) %>% 
+  filter(PC %in% 1:2) %>% 
+  deframe() %>% 
+  map_chr(percent, accuracy = 0.01)
+
+data_pca %>% 
+  tidy(matrix = "variables") %>%
+  filter(PC %in% c(1:2)) %>%
+  mutate(PC = str_c("PC", PC)) %>%
+  spread(PC, value) %>%
+  ggplot(aes(x = PC1, y = PC2, label = column)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_segment(aes(x = 0, y = 0, xend = PC1, yend = PC2)) +
+  geom_text(check_overlap = TRUE, nudge_y = 0.10) +
+  theme_kp() +
+  labs(title = "Principal Component Bi-Plot",
+       caption = "If Percent of Variance Explained by PC1 + PC2 is > 80%, then this will be a trustworthy plot.\nOtherwise, more exploration of the components will be necessary.") +
+  scale_x_continuous(labels = NULL, 
+                     limits = c(-1, 1),
+                     name = str_glue("PC1 ({data_pca_summary[1]})")) +
+  scale_y_continuous(labels = NULL,
+                     limits = c(-1, 1),
+                     name = str_glue("PC2 ({data_pca_summary[2]})"))
+
+```
+
+And finally, I'll look at how the rows cluster together.  Again this will get messy with a large amount of data, but it's fine for now. As with the note above for PCA, if the two PC values do not sum to > 80%, then we should spend some more time exploring the clustering.
+
+```{r cluster, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+data_raw_cluster <- data_raw %>% dummify() %>% scale()
+
+# Determine optimal number of clusters
+data_cluster <-
+  tibble(k = 1:20) %>%
+  mutate(kclust = map(k, ~kmeans(data_raw_cluster, .x)),
+         glance = map(kclust, glance)) %>%
+  unnest(glance) %>%
+  arrange(k) %>%
+  mutate(rate = 100 * (tot.withinss - lag(tot.withinss)) / lag(tot.withinss)) %>%
+  mutate(mark_potential = ifelse(rate < lag(rate), 1, 0)) %>%
+  group_by(mark_potential) %>%
+  mutate(mark_count = sequence(n()),
+         recommended_clusters = ifelse(mark_potential == 1 & mark_count == 1, k, NA)) %>%
+  ungroup() %>%
+  select(k, tot.withinss, recommended_clusters, kclust)
+
+# Create graph for optimal number of clusters
+# data_cluster %>%
+#   ggplot(aes(x = k, y = tot.withinss)) +
+#   geom_point() +
+#   geom_line() +
+#   geom_vline(aes(xintercept = recommended_clusters, color = "red")) +
+#   theme_kp() +
+#   guides(color = "none") +
+#   scale_x_continuous(breaks = 1:20)
+
+plot_cluster <- 
+  data_cluster %>% 
+  filter(!is.na(recommended_clusters)) %>% 
+  mutate(plot_kmeans = map(kclust, 
+                           ~autoplot(., data_raw_cluster, frame = TRUE, frame.type = "norm") + 
+                             labs(title = "PCA - Clusters") +
+                             theme_kp()))
+
+plot_cluster$plot_kmeans[[1]]
+  
+  
+```
+
+
+And that's it!  That's my proposal for a first step into data profiling.  I would like to build this out into a Shiny App, with interactive graphs to allow for exploration of histograms, bars, scatter plots of each variable.  
+
+Feel free to shoot me an email at kputschko@gmail.com, and the code will be available GitHub page.

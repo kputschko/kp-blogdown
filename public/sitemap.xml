@@ -3,60 +3,65 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://kputschko.netlify.com/2019/01/28/data-science-resources/</loc>
+    <loc>/2019/03/06/data-profiling/</loc>
+    <lastmod>2019-03-06T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/2019/01/28/data-science-resources/</loc>
     <lastmod>2019-01-28T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://kputschko.netlify.com/about/</loc>
+    <loc>/about/</loc>
     <lastmod>2019-01-25T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://kputschko.netlify.com/2019/01/25/hello-world/</loc>
+    <loc>/2019/01/25/hello-world/</loc>
     <lastmod>2019-01-25T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://kputschko.netlify.com/about/</loc>
+    <loc>/about/</loc>
   </url>
   
   <url>
-    <loc>https://kputschko.netlify.com/categories/</loc>
+    <loc>/categories/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://kputschko.netlify.com/post/</loc>
-    <lastmod>2019-01-28T00:00:00+00:00</lastmod>
+    <loc>/post/</loc>
+    <lastmod>2019-03-06T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://kputschko.netlify.com/</loc>
-    <lastmod>2019-01-28T00:00:00+00:00</lastmod>
+    <loc>/</loc>
+    <lastmod>2019-03-06T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://kputschko.netlify.com/categories/r/</loc>
+    <loc>/categories/r/</loc>
     <lastmod>2019-01-25T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://kputschko.netlify.com/categories/reference/</loc>
+    <loc>/categories/reference/</loc>
     <lastmod>2019-01-28T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://kputschko.netlify.com/tags/</loc>
+    <loc>/tags/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://kputschko.netlify.com/tags/test/</loc>
+    <loc>/tags/test/</loc>
     <lastmod>2019-01-25T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
