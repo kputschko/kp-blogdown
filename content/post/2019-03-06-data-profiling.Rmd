@@ -14,9 +14,22 @@ I've discovered the [DataExplorer](https://github.com/boxuancui/DataExplorer) pa
 So follow me, if you will, as I explore some of my ideas about exploring data formulating questions.
 
 ```{r prep, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-pacman::p_load(tidyverse, DataExplorer, kp.helpers, scales, corrplot, RColorBrewer, knitr, broom, ggfortify)
+pacman::p_load(
+  tidyverse,
+  DataExplorer,
+  kp.helpers,
+  scales,
+  corrplot,
+  RColorBrewer,
+  knitr,
+  broom,
+  ggfortify
+)
 
 data_raw <- iris
+# data_raw <- airquality
+# data_raw <- nycflights13::airlines
+# data_raw <- nycflights13::flights
 # data_raw <- read_csv("https://raw.githubusercontent.com/frm1789/landslide-ea/master/global_landslide_catalog_export.csv")
 
 ```
@@ -50,14 +63,16 @@ data_missing <-
   select(column_name, pct_missing) %>% 
   filter(pct_missing > 0) %>% 
   arrange(pct_missing)
-  
+
+plot_missing_label <-
+  if (nrow(data_missing) == 0) {"Note: No missing data!"} else {NULL}
+
 data_missing %>% 
   ggplot(aes(x = reorder(column_name, pct_missing), y = pct_missing, fill = pct_missing)) +
   geom_col() +
   coord_flip() +
   scale_fill_viridis_c(guide = "none") +
-  labs(y = "Percent Missing", x = "Column", title = "Missing Data", 
-       subtitle = ifelse(nrow(data_missing) > 0, NULL, "Note: There is no missing data in this dataframe!")) +
+  labs(y = "Percent Missing", x = "Column", title = "Missing Data", subtitle = plot_missing_label) +
   theme_kp()
 ```
 
@@ -68,7 +83,12 @@ I like the offerings of the [corrplot](https://cran.r-project.org/web/packages/c
 I would like to continue exploring ways to visualize a larger amount of columns.
 
 ```{r correlation}
-data_cor_all <- data_raw %>% dummify() %>% cor() 
+data_cor_all <- 
+  data_raw %>% 
+  select_if(negate(lubridate::is.timepoint)) %>% 
+  dummify() %>% 
+  select_if(is.numeric) %>% 
+  cor(use = "na.or.complete") 
 
 # data_cor_all_long <- 
 #   data_cor_all %>% 
@@ -173,4 +193,4 @@ plot_cluster$plot_kmeans[[1]]
 
 And that's it!  That's my proposal for a first step into data profiling.  I would like to build this out into a Shiny App, with interactive graphs to allow for exploration of histograms, bars, scatter plots of each variable.  
 
-Feel free to shoot me an email at kputschko@gmail.com, and the code will be available GitHub page.
+Feel free to shoot me an email at kputschko@gmail.com, and the code will be available on my GitHub page.

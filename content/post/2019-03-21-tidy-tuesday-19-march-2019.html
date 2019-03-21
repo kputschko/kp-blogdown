@@ -1,0 +1,92 @@
+---
+title: Tidy Tuesday - 19 March 2019
+author: Kevin Putschko
+date: '2019-03-21'
+slug: tidy-tuesday-19-march-2019
+categories:
+  - Data Viz
+tags:
+  - TidyTuesday
+---
+
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<link href="/rmarkdown-libs/datatables-css/datatables-crosstalk.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/datatables-binding/datatables.js"></script>
+<link href="/rmarkdown-libs/dt-core/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="/rmarkdown-libs/dt-core/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/dt-core/js/jquery.dataTables.min.js"></script>
+<link href="/rmarkdown-libs/crosstalk/css/crosstalk.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/crosstalk/js/crosstalk.min.js"></script>
+
+
+<p>The data this week relates to law enforcement traffic stops from around the US. The data was compiled by Stanford University. Find more information on the <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-03-19">Tidy Tuesday page</a>.</p>
+<p>I’m going to spend only a couple hours putting this blog post, in the hopes of developing both my writing and my data viz skills. I hope to repeat this process either every week or a couple times per month.</p>
+<p>The data has 11 columns and 2,688 rows. I see location data based on county and state, with a driver’s race as the only demographic data. We have information for only 17 states, broken down by county. Texas has the most counties with available data by a large margin. The racial make up of Texas might skew our results when compared to Ohio, which is the state with the second highest number of data available.</p>
+<pre class="r"><code>data_raw %&gt;% 
+  group_by(state) %&gt;% 
+  summarise(n_counties = n_distinct(location)) %&gt;% 
+  arrange(-n_counties) %&gt;% 
+  ggplot(aes(x = reorder(state, n_counties), y = n_counties)) +
+  geom_col() +
+  coord_flip() +
+  theme_kp() +
+  labs(x = NULL, title = &quot;Amount of County data available by State&quot;, y = NULL)</code></pre>
+<p><img src="/post/2019-03-21-tidy-tuesday-19-march-2019_files/figure-html/data_plot-1.png" width="672" /></p>
+<p>So I will just focus on Texas for now. Digging into the race column, I see that every county is broken down into the number of stops for only Black, Hispanic, and White drivers. Apparently Texas doesn’t have any other race of people.</p>
+<pre class="r"><code>data_tx &lt;- data_raw %&gt;% filter(state == &quot;TX&quot;) 
+data_tx %&gt;% glimpse()</code></pre>
+<pre><code>## Observations: 762
+## Variables: 11
+## $ location                     &lt;chr&gt; &quot;ANDERSON COUNTY&quot;, &quot;ANDERSON COUN...
+## $ state                        &lt;chr&gt; &quot;TX&quot;, &quot;TX&quot;, &quot;TX&quot;, &quot;TX&quot;, &quot;TX&quot;, &quot;TX...
+## $ driver_race                  &lt;chr&gt; &quot;Black&quot;, &quot;Hispanic&quot;, &quot;White&quot;, &quot;Bl...
+## $ stops_per_year               &lt;dbl&gt; 1932, 1310, 8470, 81, 1379, 1268,...
+## $ stop_rate                    &lt;dbl&gt; 0.182, 0.179, 0.289, 0.455, 0.230...
+## $ search_rate                  &lt;dbl&gt; 0.017, 0.016, 0.010, 0.017, 0.011...
+## $ consent_search_rate          &lt;dbl&gt; 0.006, 0.007, 0.003, 0.012, 0.004...
+## $ arrest_rate                  &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, N...
+## $ citation_rate_speeding_stops &lt;dbl&gt; 0.349, 0.403, 0.277, 0.299, 0.366...
+## $ hit_rate                     &lt;dbl&gt; 0.456, 0.383, 0.367, 0.571, 0.403...
+## $ inferred_threshold           &lt;dbl&gt; 0.252, 0.193, 0.230, NA, NA, NA, ...</code></pre>
+<p>I’m not sure what to make of the data available for stop rate, search rate, etc. Are these figures per 1000 people (or more), or are they a percentage of all stops?</p>
+<pre class="r"><code>data_summary &lt;- data_tx %&gt;% fx_describe()
+if (interactive()) data_summary else DT::datatable(data_summary)</code></pre>
+<div id="htmlwidget-1" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"filter":"none","data":[["1","2","3","4","5","6","7","8","9","10","11"],["location","state","driver_race","stops_per_year","stop_rate","search_rate","consent_search_rate","arrest_rate","citation_rate_speeding_stops","hit_rate","inferred_threshold"],["character","character","character","numeric","numeric","numeric","numeric","numeric","numeric","numeric","numeric"],["762","762","762","762","762","762","762","762","762","762","762"],["0","0","0","0","3","0","0","762","0","9","462"],["0%","0%","0%","0%","0%","0%","0%","100%","0%","1%","61%"],["254","1","3","687","540","74","51","0","366","366","150"],["NA","NA","NA","1.0000","0.0040","0.0000","0.0000","Inf","0.0000","0.0000","0.0450"],["NA","NA","NA","76,863.0000","53.1250","0.3330","0.1670","-Inf","1.0000","1.0000","0.4060"],["NA","NA","NA","2,686.1220","0.9525","0.0220","0.0098","NaN","0.2927","0.3474","0.2066"],["NA","NA","NA","4,779.6653","3.1511","0.0222","0.0121","NaN","0.1251","0.1614","0.0548"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>column_name<\/th>\n      <th>column_type<\/th>\n      <th>n<\/th>\n      <th>n_missing<\/th>\n      <th>pct_missing<\/th>\n      <th>n_distinct<\/th>\n      <th>min<\/th>\n      <th>max<\/th>\n      <th>mean<\/th>\n      <th>sd<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"order":[],"autoWidth":false,"orderClasses":false,"columnDefs":[{"orderable":false,"targets":0}]}},"evals":[],"jsHooks":[]}</script>
+<p>I see that <code>stop_rate</code> has a max value of <code>53.12</code>. I’m not sure what this means. Anyway, I’ll delve into the other rate values instead of stop rate because they may be easier to understand.</p>
+<pre class="r"><code>data_rates &lt;- 
+  data_tx %&gt;% 
+  group_by(driver_race) %&gt;% 
+  summarise(stops_n = sum(stops_per_year),
+            stops = mean(stop_rate, na.rm = TRUE),
+            search = mean(search_rate, na.rm = TRUE),
+            consent = mean(consent_search_rate, na.rm = TRUE),
+            contraband = mean(hit_rate, na.rm = TRUE))
+
+if (interactive()) data_rates else DT::datatable(data_rates)</code></pre>
+<div id="htmlwidget-2" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-2">{"x":{"filter":"none","data":[["1","2","3"],["Black","Hispanic","White"],[216470,700082,1130273],[1.83191633466135,0.548137795275591,0.487787401574803],[0.0304763779527559,0.0225590551181102,0.0128188976377953],[0.0134251968503937,0.0110669291338583,0.00498031496062992],[0.365784552845528,0.300204724409449,0.376932806324111]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>driver_race<\/th>\n      <th>stops_n<\/th>\n      <th>stops<\/th>\n      <th>search<\/th>\n      <th>consent<\/th>\n      <th>contraband<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"columnDefs":[{"className":"dt-right","targets":[2,3,4,5,6]},{"orderable":false,"targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+<p>Wow, here we see that many more whites are stopped than blacks and hispanics combined, however whites are searched at a rate less than half that of blacks. Whites also consent to a search less often than blacks or hispanics, while leading the rate at which contraband is found.</p>
+<p>To conclude this exploration, I’ll attempt to portray the above table visually.</p>
+<pre class="r"><code>data_plot &lt;- 
+  data_rates %&gt;% 
+  select(-stops_n) %&gt;% 
+  gather(label, value, stops:contraband) %&gt;% 
+  mutate(label = factor(label, c(&quot;stops&quot;, &quot;search&quot;, &quot;consent&quot;, &quot;contraband&quot;)),
+         race = factor(driver_race, c(&quot;White&quot;, &quot;Black&quot;, &quot;Hispanic&quot;)))
+
+data_plot %&gt;% 
+  ggplot() +
+  aes(x = race, y = value, fill = race) +
+  geom_col(color = &quot;black&quot;) +
+  facet_wrap(facets = vars(label), nrow = 2, scales = &quot;free&quot;) +
+  labs(x = NULL, y = NULL) +
+  guides(fill = &quot;none&quot;) +
+  theme_kp()</code></pre>
+<p><img src="/post/2019-03-21-tidy-tuesday-19-march-2019_files/figure-html/plot-1.png" width="672" /></p>
+<div id="conclusion" class="section level3">
+<h3>Conclusion</h3>
+<p>What did I learn? I need more practice with data viz. I want to create a more informative chart to display the information, but I’m not sure how to structure it. For now, I’m ok with the multiple bar charts to explicitly demonstrate the difference between races.</p>
+<p>In the future, I could conduct some statistical analyses on the differences between races. This is an interesting data set, and an interesting project by Stanford. I hope to return to this data in the future.</p>
+</div>

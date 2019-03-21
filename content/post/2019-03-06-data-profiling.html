@@ -12,9 +12,22 @@ tags: []
 <p>When I’m starting a new project, I typically have no idea what is present in a data set, and I don’t know enough about the project to formulate reasonable questions for the keepers of the data. So I’m usually running an identical set of processes on every new data set I come across.</p>
 <p>I’ve discovered the <a href="https://github.com/boxuancui/DataExplorer">DataExplorer</a> package for R recently, which aims to assist in this process of shining a light into the cavern of unknown data. I think this is a great place to start, but I’m interested in making my own tweaks.</p>
 <p>So follow me, if you will, as I explore some of my ideas about exploring data formulating questions.</p>
-<pre class="r"><code>pacman::p_load(tidyverse, DataExplorer, kp.helpers, scales, corrplot, RColorBrewer, knitr, broom, ggfortify)
+<pre class="r"><code>pacman::p_load(
+  tidyverse,
+  DataExplorer,
+  kp.helpers,
+  scales,
+  corrplot,
+  RColorBrewer,
+  knitr,
+  broom,
+  ggfortify
+)
 
 data_raw &lt;- iris
+# data_raw &lt;- airquality
+# data_raw &lt;- nycflights13::airlines
+# data_raw &lt;- nycflights13::flights
 # data_raw &lt;- read_csv(&quot;https://raw.githubusercontent.com/frm1789/landslide-ea/master/global_landslide_catalog_export.csv&quot;)</code></pre>
 <p>One of the many convenience functions I like in DataExplorer is the the <code>introduce()</code> function. It quickly gives us a view of the dimensions and byte size of the data frame.</p>
 <pre class="r"><code>data_raw %&gt;% 
@@ -159,20 +172,27 @@ data_summary %&gt;% kable()</code></pre>
   select(column_name, pct_missing) %&gt;% 
   filter(pct_missing &gt; 0) %&gt;% 
   arrange(pct_missing)
-  
+
+plot_missing_label &lt;-
+  if (nrow(data_missing) == 0) {&quot;Note: No missing data!&quot;} else {NULL}
+
 data_missing %&gt;% 
   ggplot(aes(x = reorder(column_name, pct_missing), y = pct_missing, fill = pct_missing)) +
   geom_col() +
   coord_flip() +
   scale_fill_viridis_c(guide = &quot;none&quot;) +
-  labs(y = &quot;Percent Missing&quot;, x = &quot;Column&quot;, title = &quot;Missing Data&quot;, 
-       subtitle = ifelse(nrow(data_missing) &gt; 0, NULL, &quot;Note: There is no missing data in this dataframe!&quot;)) +
+  labs(y = &quot;Percent Missing&quot;, x = &quot;Column&quot;, title = &quot;Missing Data&quot;, subtitle = plot_missing_label) +
   theme_kp()</code></pre>
 <p><img src="/post/2019-03-06-data-profiling_files/figure-html/summary-1.png" width="672" /></p>
 <p>After this brief overview of the data, I’ll want to begin exploring the relationships between the columns. We start with a simple correlation analysis. This is where any automatic reporting causes trouble for me. DataExplorer has a nice function, <code>plot_correlation()</code>, to get a quick view of correlation, but it quickly becomes illegible as the number of columns increases.</p>
 <p>I like the offerings of the <a href="https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html">corrplot</a> package, as it offers a bit more flexibility. However, there are still issues when we have a large number of columns.</p>
 <p>I would like to continue exploring ways to visualize a larger amount of columns.</p>
-<pre class="r"><code>data_cor_all &lt;- data_raw %&gt;% dummify() %&gt;% cor() 
+<pre class="r"><code>data_cor_all &lt;- 
+  data_raw %&gt;% 
+  select_if(negate(lubridate::is.timepoint)) %&gt;% 
+  dummify() %&gt;% 
+  select_if(is.numeric) %&gt;% 
+  cor(use = &quot;na.or.complete&quot;) 
 
 # data_cor_all_long &lt;- 
 #   data_cor_all %&gt;% 
@@ -262,4 +282,4 @@ plot_cluster &lt;-
 plot_cluster$plot_kmeans[[1]]</code></pre>
 <p><img src="/post/2019-03-06-data-profiling_files/figure-html/cluster-1.png" width="672" /></p>
 <p>And that’s it! That’s my proposal for a first step into data profiling. I would like to build this out into a Shiny App, with interactive graphs to allow for exploration of histograms, bars, scatter plots of each variable.</p>
-<p>Feel free to shoot me an email at <a href="mailto:kputschko@gmail.com" class="email">kputschko@gmail.com</a>, and the code will be available GitHub page.</p>
+<p>Feel free to shoot me an email at <a href="mailto:kputschko@gmail.com" class="email">kputschko@gmail.com</a>, and the code will be available on my GitHub page.</p>

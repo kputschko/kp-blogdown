@@ -6,10 +6,20 @@
     <description>Recent content on Putschko &#43; R</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 06 Mar 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 21 Mar 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Tidy Tuesday - 19 March 2019</title>
+      <link>/2019/03/21/tidy-tuesday-19-march-2019/</link>
+      <pubDate>Thu, 21 Mar 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/03/21/tidy-tuesday-19-march-2019/</guid>
+      <description>The data this week relates to law enforcement traffic stops from around the US. The data was compiled by Stanford University. Find more information on the Tidy Tuesday page.
+I’m going to spend only a couple hours putting this blog post, in the hopes of developing both my writing and my data viz skills. I hope to repeat this process either every week or a couple times per month.</description>
+    </item>
     
     <item>
       <title>Data Profiling</title>

@@ -1,0 +1,96 @@
+---
+title: Tidy Tuesday - 19 March 2019
+author: Kevin Putschko
+date: '2019-03-21'
+slug: tidy-tuesday-19-march-2019
+categories:
+  - Data Viz
+tags:
+  - TidyTuesday
+---
+
+The data this week relates to law enforcement traffic stops from around the US.  The data was compiled by Stanford University.  Find more information on the [Tidy Tuesday page](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-03-19).
+
+I'm going to spend only a couple hours putting this blog post, in the hopes of developing both my writing and my data viz skills.  I hope to repeat this process either every week or a couple times per month.  
+
+```{r Setup, include=FALSE}
+pacman::p_load(tidyverse, kp.helpers)
+
+data_raw <- 
+  read_csv("https://raw.githubusercontent.com/5harad/openpolicing/master/results/data_for_figures/combined_data.csv")
+
+data_raw %>% glimpse()
+```
+
+The data has 11 columns and 2,688 rows.  I see location data based on county and state, with a driver's race as the only demographic data.  We have information for only 17 states, broken down by county.  Texas has the most counties with available data by a large margin.  The racial make up of Texas might skew our results when compared to Ohio, which is the state with the second highest number of data available. 
+
+```{r data_plot}
+data_raw %>% 
+  group_by(state) %>% 
+  summarise(n_counties = n_distinct(location)) %>% 
+  arrange(-n_counties) %>% 
+  ggplot(aes(x = reorder(state, n_counties), y = n_counties)) +
+  geom_col() +
+  coord_flip() +
+  theme_kp() +
+  labs(x = NULL, title = "Amount of County data available by State", y = NULL)
+```
+
+So I will just focus on Texas for now.  Digging into the race column, I see that every county is broken down into the number of stops for only Black, Hispanic, and White drivers.  Apparently Texas doesn't have any other race of people.  
+
+
+```{r data_glimpse}
+data_tx <- data_raw %>% filter(state == "TX") 
+data_tx %>% glimpse()
+```
+
+I'm not sure what to make of the data available for stop rate, search rate, etc.  Are these figures per 1000 people (or more), or are they a percentage of all stops?  
+
+```{r data-summary, message=TRUE, warning=TRUE, paged.print=TRUE}
+data_summary <- data_tx %>% fx_describe()
+if (interactive()) data_summary else DT::datatable(data_summary)
+```
+
+I see that `stop_rate` has a max value of `53.12`.  I'm not sure what this means. Anyway, I'll delve into the other rate values instead of stop rate because they may be easier to understand. 
+
+```{r rate_summary, message=TRUE, warning=TRUE}
+data_rates <- 
+  data_tx %>% 
+  group_by(driver_race) %>% 
+  summarise(stops_n = sum(stops_per_year),
+            stops = mean(stop_rate, na.rm = TRUE),
+            search = mean(search_rate, na.rm = TRUE),
+            consent = mean(consent_search_rate, na.rm = TRUE),
+            contraband = mean(hit_rate, na.rm = TRUE))
+
+if (interactive()) data_rates else DT::datatable(data_rates)
+
+```
+
+Wow, here we see that many more whites are stopped than blacks and hispanics combined, however whites are searched at a rate less than half that of blacks.  Whites also consent to a search less often than blacks or hispanics, while leading the rate at which contraband is found.  
+
+To conclude this exploration, I'll attempt to portray the above table visually.
+
+```{r plot, message=TRUE, warning=TRUE, paged.print=TRUE}
+data_plot <- 
+  data_rates %>% 
+  select(-stops_n) %>% 
+  gather(label, value, stops:contraband) %>% 
+  mutate(label = factor(label, c("stops", "search", "consent", "contraband")),
+         race = factor(driver_race, c("White", "Black", "Hispanic")))
+
+data_plot %>% 
+  ggplot() +
+  aes(x = race, y = value, fill = race) +
+  geom_col(color = "black") +
+  facet_wrap(facets = vars(label), nrow = 2, scales = "free") +
+  labs(x = NULL, y = NULL) +
+  guides(fill = "none") +
+  theme_kp()
+```
+
+### Conclusion
+
+What did I learn?  I need more practice with data viz.  I want to create a more informative chart to display the information, but I'm not sure how to structure it.  For now, I'm ok with the multiple bar charts to explicitly demonstrate the difference between races.  
+
+In the future, I could conduct some statistical analyses on the differences between races.  This is an interesting data set, and an interesting project by Stanford.  I hope to return to this data in the future.  
