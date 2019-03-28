@@ -12,7 +12,7 @@ tags:
 ## Introduction
 
 ```{r setup}
-knitr::opts_chunk$set(include = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load(tidyverse, kp.helpers, lubridate, sf, zipcode, leaflet)
 
 data_raw <- 
@@ -23,13 +23,13 @@ This week I'll be exploring the names of pets registered in Seattle, WA.  The da
 
 We see there are 7 columns and 52,519 rows, with columns relating to data, name, species, breed, and zip code.  
 
-```{r}
+```{r echo=TRUE}
 data_raw %>% glimpse()
 ```
 
 The first thing I notice is that the date is provided in character format.  Let's convert that to a date format instead.
 
-```{r dates}
+```{r dates, echo=TRUE}
 data_dates <- 
   data_raw %>% 
   mutate(license_issue_date = as.Date(license_issue_date, format = "%B %d %Y"))
@@ -37,7 +37,7 @@ data_dates <-
 
 Now let's take a look at a summary table.
 
-```{r summary}
+```{r summary, echo=TRUE}
 data_dates %>% fx_describe() %>% DT::datatable()
 ```
 
@@ -49,7 +49,7 @@ With this in mind, let's take a look at 1) Name Popularity, and 2) Species Popul
 
 First of all, let's calculate the date.  Once that's done we see that the distirbution of names by date is heavily skewed to recent years.  This will adjust our plans.  
 
-```{r pet_names}
+```{r pet_names, echo=TRUE}
 data_dates %>% 
   filter(!is.na(animals_name)) %>% 
   mutate(year = year(license_issue_date)) %>% 
@@ -63,7 +63,7 @@ data_dates %>%
 
 So, let's just dig into the top names!  
 
-```{r name_plot}
+```{r name_plot, echo=TRUE}
 data_name_plot <- 
   data_dates %>% 
   count(species, animals_name, sort = TRUE) %>% 
@@ -91,7 +91,7 @@ We can see there are a handful of names that are used for both cats and dogs.  I
 
 Now let's look at species by region.  I see that there are some registered pigs and goats, let's see where those are coming from while we're at it.
 
-```{r species}
+```{r species, echo=TRUE}
 data_raw %>% 
   count(species, sort = TRUE) %>% 
   ggplot(aes(x = as_factor(species), y = n)) + 
@@ -103,7 +103,7 @@ data_raw %>%
 
 This is actually my first time using leaflet, and only one of a handful of times that I've worked with data viz and maps.  Let's see how it goes! 
 
-```{r zips}
+```{r zips, echo=TRUE}
 data(zipcode)
 
 data_species <- 

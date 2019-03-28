@@ -17,7 +17,7 @@
       <pubDate>Tue, 26 Mar 2019 00:00:00 +0000</pubDate>
       
       <guid>/2019/03/26/seattle-pet-names/</guid>
-      <description>Introductionknitr::opts_chunk$set(include = FALSE)pacman::p_load(tidyverse, kp.helpers, lubridate, sf, zipcode, leaflet)data_raw &amp;lt;- read_csv(&amp;quot;https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-03-26/seattle_pets.csv&amp;quot;)## Parsed with column specification:## cols(## license_issue_date = col_character(),## license_number = col_character(),## animals_name = col_character(),## species = col_character(),## primary_breed = col_character(),## secondary_breed = col_character(),## zip_code = col_character()## )This week I’ll be exploring the names of pets registered in Seattle, WA.</description>
+      <description>Introductionknitr::opts_chunk$set(echo = TRUE)pacman::p_load(tidyverse, kp.helpers, lubridate, sf, zipcode, leaflet)data_raw &amp;lt;- read_csv(&amp;quot;https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-03-26/seattle_pets.csv&amp;quot;)## Parsed with column specification:## cols(## license_issue_date = col_character(),## license_number = col_character(),## animals_name = col_character(),## species = col_character(),## primary_breed = col_character(),## secondary_breed = col_character(),## zip_code = col_character()## )This week I’ll be exploring the names of pets registered in Seattle, WA.</description>
     </item>
     
     <item>

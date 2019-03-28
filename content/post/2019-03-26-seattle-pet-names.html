@@ -31,7 +31,7 @@ tags:
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<pre class="r"><code>knitr::opts_chunk$set(include = FALSE)
+<pre class="r"><code>knitr::opts_chunk$set(echo = TRUE)
 pacman::p_load(tidyverse, kp.helpers, lubridate, sf, zipcode, leaflet)
 
 data_raw &lt;- 
@@ -48,21 +48,99 @@ data_raw &lt;-
 ## )</code></pre>
 <p>This week I’ll be exploring the names of pets registered in Seattle, WA. The data comes from the <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-03-26">TidyTuesday</a> weekly blog.</p>
 <p>We see there are 7 columns and 52,519 rows, with columns relating to data, name, species, breed, and zip code.</p>
+<pre class="r"><code>data_raw %&gt;% glimpse()</code></pre>
+<pre><code>## Observations: 52,519
+## Variables: 7
+## $ license_issue_date &lt;chr&gt; &quot;November 16 2018&quot;, &quot;November 11 2018&quot;, &quot;No...
+## $ license_number     &lt;chr&gt; &quot;8002756&quot;, &quot;S124529&quot;, &quot;903793&quot;, &quot;824666&quot;, &quot;...
+## $ animals_name       &lt;chr&gt; &quot;Wall-E&quot;, &quot;Andre&quot;, &quot;Mac&quot;, &quot;Melb&quot;, &quot;Gingersn...
+## $ species            &lt;chr&gt; &quot;Dog&quot;, &quot;Dog&quot;, &quot;Dog&quot;, &quot;Cat&quot;, &quot;Cat&quot;, &quot;Dog&quot;, &quot;...
+## $ primary_breed      &lt;chr&gt; &quot;Mixed Breed, Medium (up to 44 lbs fully gr...
+## $ secondary_breed    &lt;chr&gt; &quot;Mix&quot;, &quot;Dachshund, Standard Wire Haired&quot;, N...
+## $ zip_code           &lt;chr&gt; &quot;98108&quot;, &quot;98117&quot;, &quot;98136&quot;, &quot;98117&quot;, &quot;98144&quot;...</code></pre>
 <p>The first thing I notice is that the date is provided in character format. Let’s convert that to a date format instead.</p>
+<pre class="r"><code>data_dates &lt;- 
+  data_raw %&gt;% 
+  mutate(license_issue_date = as.Date(license_issue_date, format = &quot;%B %d %Y&quot;))</code></pre>
 <p>Now let’s take a look at a summary table.</p>
+<pre class="r"><code>data_dates %&gt;% fx_describe() %&gt;% DT::datatable()</code></pre>
+<div id="htmlwidget-1" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"filter":"none","data":[["1","2","3","4","5","6","7"],["license_issue_date","license_number","animals_name","species","primary_breed","secondary_breed","zip_code"],["Date","character","character","character","character","character","character"],["52,519","52,519","52,519","52,519","52,519","52,519","52,519"],["0","0","483","0","0","29,517","397"],["0.0%","0.0%","0.9%","0.0%","0.0%","56.2%","0.8%"],["1,064","52,497","13,929","4","336","260","167"],["2003-04-19",null,null,null,null,null,null],["2018-12-31",null,null,null,null,null,null],["2018-02-15",null,null,null,null,null,null],["229.0163","NA","NA","NA","NA","NA","NA"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th> <\/th>\n      <th>column_name<\/th>\n      <th>column_type<\/th>\n      <th>n<\/th>\n      <th>n_missing<\/th>\n      <th>pct_missing<\/th>\n      <th>n_distinct<\/th>\n      <th>min<\/th>\n      <th>max<\/th>\n      <th>mean<\/th>\n      <th>sd<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"order":[],"autoWidth":false,"orderClasses":false,"columnDefs":[{"orderable":false,"targets":0}]}},"evals":[],"jsHooks":[]}</script>
 <p>Alright! We see the dates range from 2003 to 2018, and that there are some missing values for secondary breed, name and zip code.</p>
 <p>With this in mind, let’s take a look at 1) Name Popularity, and 2) Species Popularity by Zip Code.</p>
 </div>
 <div id="name-popularity" class="section level2">
 <h2>Name Popularity</h2>
 <p>First of all, let’s calculate the date. Once that’s done we see that the distirbution of names by date is heavily skewed to recent years. This will adjust our plans.</p>
+<pre class="r"><code>data_dates %&gt;% 
+  filter(!is.na(animals_name)) %&gt;% 
+  mutate(year = year(license_issue_date)) %&gt;% 
+  count(year) %&gt;% 
+  ggplot(aes(x = factor(year), y = n)) +
+  geom_col() +
+  scale_y_log10() +
+  theme_kp() +
+  labs(x = &quot;Year&quot;, y = &quot;Count (Log10)&quot;, title = &quot;Records per Year&quot;)</code></pre>
+<p><img src="/post/2019-03-26-seattle-pet-names_files/figure-html/pet_names-1.png" width="672" /></p>
 <p>So, let’s just dig into the top names!</p>
+<pre class="r"><code>data_name_plot &lt;- 
+  data_dates %&gt;% 
+  count(species, animals_name, sort = TRUE) %&gt;% 
+  filter(n &gt; 5) %&gt;%
+  group_by(species) %&gt;% 
+  top_n(10, n) %&gt;%
+  replace_na(list(animals_name = &quot;No Recorded Name&quot;)) %&gt;% 
+  group_by(animals_name) %&gt;% 
+  mutate(total_names = sum(n, na.rm = TRUE),
+         p = scales::percent(n / total_names, accuracy = 1),
+         label_coord = cumsum(n) - n/2)
+  
+data_name_plot %&gt;% 
+  ggplot(aes(x = reorder(animals_name, total_names), y = n, fill = species)) +
+  geom_col(position = &quot;stack&quot;, color = &quot;black&quot;) +
+  geom_text(aes(y = label_coord, label = p), color = &quot;white&quot;, size = 3, family = &quot;sans&quot;) +
+  coord_flip() +
+  theme_kp() +
+  labs(x = NULL, y = &quot;Count&quot;, fill = &quot;Species&quot;, title = &quot;Top 10 Names of Cats and Dogs&quot;)</code></pre>
+<p><img src="/post/2019-03-26-seattle-pet-names_files/figure-html/name_plot-1.png" width="672" /></p>
 <p>We can see there are a handful of names that are used for both cats and dogs. Interestingly, only cats have records without any given names. I imagine this is due to catch and release programs that might exist in the Seattle area.</p>
 </div>
 <div id="species-by-region" class="section level2">
 <h2>Species by Region</h2>
 <p>Now let’s look at species by region. I see that there are some registered pigs and goats, let’s see where those are coming from while we’re at it.</p>
+<pre class="r"><code>data_raw %&gt;% 
+  count(species, sort = TRUE) %&gt;% 
+  ggplot(aes(x = as_factor(species), y = n)) + 
+  geom_col() + 
+  scale_y_log10() + 
+  theme_kp() + 
+  labs(x = &quot;Species&quot;, y = &quot;Count (Log 10)&quot;, title = &quot;Count of Species in Seattle Area&quot;)</code></pre>
+<p><img src="/post/2019-03-26-seattle-pet-names_files/figure-html/species-1.png" width="672" /></p>
 <p>This is actually my first time using leaflet, and only one of a handful of times that I’ve worked with data viz and maps. Let’s see how it goes!</p>
+<pre class="r"><code>data(zipcode)
+
+data_species &lt;- 
+  data_raw %&gt;% 
+  mutate_at(vars(species), as_factor) %&gt;% 
+  count(zip_code, species, sort = TRUE) %&gt;%   
+  inner_join(zipcode, by = c(&quot;zip_code&quot; = &quot;zip&quot;))
+
+pal &lt;- 
+  colorFactor(
+    palette = &quot;Dark2&quot;, 
+    domain = data_species$species %&gt;% unique())
+
+data_species %&gt;% 
+  leaflet() %&gt;% 
+  setView(lng = -122.3, lat = 47.6, zoom = 11) %&gt;% 
+  addProviderTiles(providers$Wikimedia) %&gt;% 
+  addCircleMarkers(lng = ~longitude, 
+                   lat = ~latitude, 
+                   color = ~pal(species),
+                   radius = ~n*0.02,
+                   weight = 1)</code></pre>
+<div id="htmlwidget-2" style="width:672px;height:480px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-2">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"setView":[[47.6,-122.3],11,[]],"calls":[{"method":"addProviderTiles","args":["Wikimedia",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addCircleMarkers","args":[[47.68382,47.671346,47.685919,47.716648,47.543348,47.57487,47.671346,47.68382,47.61157,47.64767,47.66747,47.54687,47.629653,47.53282,47.66377,47.685919,47.58577,47.630648,47.63877,47.538887,47.733852,47.63287,47.716648,47.61157,47.66747,47.546188,47.64767,47.66377,47.57487,47.630648,47.733852,47.740886,47.63877,47.61487,47.63287,47.543348,47.629653,47.58577,47.53282,47.54687,47.538887,47.501753,47.61067,47.60252,47.61487,47.497971,47.546188,47.61067,47.740886,47.60252,47.501753,47.497971,47.57867,47.491327,47.753019,47.753019,47.57867,47.606139,47.61,47.61,47.432251,47.432251,47.61,47.432251,47.733852,47.546188,47.763669,47.68382,47.61,47.61,47.432251,47.61,47.432251,47.629653,47.432251,47.716648,47.432251,47.606139,47.491327,47.450321,47.397521,47.569271,47.677471,47.53282,47.432251,47.432251,47.543348,47.61157,47.61,47.458821,47.458821,27.788498,29.825476,36.171219,45.428663,47.311072,47.618371,47.751471,47.71828,47.848237,47.763669,47.68382,47.685919,47.716648,47.432251,47.61,47.443756,47.61,47.740886,47.450321,47.397521,48.747578,46.978118,38.489733,40.532354,35.18076,35.18076,36.10524,37.834724,37.189396,41.615475,47.562975,47.610935,47.609222,47.7353,47.821568,47.388461,47.67903,47.808816,47.381989,47.381989,47.363382,47.467422,47.448322,47.493031,47.66747,47.685919,47.54687,47.432251,47.432251,47.432251,47.61,47.443756,47.61,47.432251,47.943468,47.90296,47.893451,48.747578,48.759079,47.962134,48.943476,48.061269,48.185511,47.86527,47.18,47.247671,47.203946,47.16062,45.60916,45.60916,46.605303,47.009726,48.733324],[-122.30122,-122.34166,-122.37838,-122.30308,-122.27496,-122.39392,-122.34166,-122.30122,-122.30406,-122.39758,-122.37468,-122.3748,-122.29752,-122.35443,-122.30118,-122.37838,-122.30081,-122.34675,-122.36694,-122.38803,-122.34461,-122.32253,-122.30308,-122.30406,-122.37468,-122.31514,-122.39758,-122.30118,-122.39392,-122.34675,-122.34461,-122.36978,-122.36694,-122.34578,-122.32253,-122.27496,-122.29752,-122.30081,-122.35443,-122.3748,-122.38803,-122.35688,-122.33438,-122.32855,-122.34578,-122.24664,-122.31514,-122.33438,-122.36978,-122.32855,-122.35688,-122.24664,-122.33441,-122.3027,-122.30373,-122.30373,-122.33441,-122.33186,-122.33,-122.33,-121.803388,-121.803388,-122.33,-121.803388,-122.34461,-122.31514,-122.35384,-122.30122,-122.33,-122.33,-121.803388,-122.33,-121.803388,-122.29752,-121.803388,-122.30308,-121.803388,-122.33186,-122.3027,-122.27472,-122.315,-122.23233,-122.12138,-122.35443,-121.803388,-121.803388,-122.27496,-122.30406,-122.33,-122.34943,-122.34943,-82.1508,-95.42619,-115.21682,-122.3809,-122.31188,-122.20308,-122.20257,-122.19702,-122.28348,-122.35384,-122.30122,-122.37838,-122.30308,-121.803388,-122.33,-122.33068,-122.33,-122.36978,-122.27472,-122.315,-122.48508,-122.702393,-94.96465,-105.0535,-106.52021,-106.52021,-115.04592,-122.28316,-121.705327,-122.87744,-122.1526,-122.14104,-122.1155,-121.96222,-122.33651,-122.19644,-122.1934,-122.28394,-122.03553,-122.03553,-122.11451,-122.21005,-122.14584,-122.14169,-122.37468,-122.37838,-122.3748,-121.803388,-121.803388,-121.803388,-122.33,-122.33068,-122.33,-121.803388,-122.21792,-122.25064,-122.19797,-122.48508,-122.43597,-122.40089,-122.45723,-122.1588,-122.48209,-121.78899,-122.16,-122.43971,-122.52996,-122.55877,-122.40547,-122.40547,-120.61762,-120.52364,-117.97348],[62.22,56.9,50.48,38.78,35.08,33.2,33.1,32.52,31.68,31.68,30.86,28.76,27.68,27.24,27.2,26.88,26.22,25.1,23.74,23.34,22.16,20.02,18.68,18.62,18.18,14.88,14.36,14.08,13.84,13.36,13.22,13.08,12.9,12.46,12.44,12.36,11.72,11.52,10.68,10.64,9.2,8.88,8.64,6.9,6.76,5.86,5.66,5.52,5,3.76,3.64,1.94,0.52,0.5,0.32,0.24,0.22,0.22,0.2,0.18,0.16,0.14,0.14,0.12,0.12,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.08,0.06,0.06,0.06,0.06,0.06,0.06,0.06,0.06,0.06,0.06,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.04,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02,0.02],null,null,{"interactive":true,"className":"","stroke":true,"color":["#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#D95F02","#D95F02","#1B9E77","#D95F02","#D95F02","#D95F02","#D95F02","#D95F02","#1B9E77","#D95F02","#1B9E77","#D95F02","#D95F02","#D95F02","#D95F02","#D95F02","#D95F02","#D95F02","#1B9E77","#1B9E77","#1B9E77","#D95F02","#1B9E77","#D95F02","#D95F02","#D95F02","#D95F02","#D95F02","#D95F02","#1B9E77","#1B9E77","#1B9E77","#D95F02","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#7570B3","#7570B3","#1B9E77","#7570B3","#D95F02","#D95F02","#D95F02","#1B9E77","#D95F02","#7570B3","#D95F02","#7570B3","#1B9E77","#D95F02","#D95F02","#1B9E77","#D95F02","#1B9E77","#1B9E77","#7570B3","#D95F02","#D95F02","#7570B3","#7570B3","#D95F02","#1B9E77","#D95F02","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#E7298A","#7570B3","#E7298A","#D95F02","#D95F02","#D95F02","#D95F02","#7570B3","#D95F02","#1B9E77","#D95F02","#1B9E77","#D95F02","#1B9E77","#1B9E77","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#1B9E77","#D95F02","#1B9E77","#1B9E77","#E7298A","#E7298A","#7570B3","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#1B9E77","#D95F02","#D95F02","#1B9E77","#1B9E77","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#1B9E77","#1B9E77","#1B9E77"],"weight":1,"opacity":0.5,"fill":true,"fillColor":["#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#D95F02","#D95F02","#1B9E77","#D95F02","#D95F02","#D95F02","#D95F02","#D95F02","#1B9E77","#D95F02","#1B9E77","#D95F02","#D95F02","#D95F02","#D95F02","#D95F02","#D95F02","#D95F02","#1B9E77","#1B9E77","#1B9E77","#D95F02","#1B9E77","#D95F02","#D95F02","#D95F02","#D95F02","#D95F02","#D95F02","#1B9E77","#1B9E77","#1B9E77","#D95F02","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#7570B3","#7570B3","#1B9E77","#7570B3","#D95F02","#D95F02","#D95F02","#1B9E77","#D95F02","#7570B3","#D95F02","#7570B3","#1B9E77","#D95F02","#D95F02","#1B9E77","#D95F02","#1B9E77","#1B9E77","#7570B3","#D95F02","#D95F02","#7570B3","#7570B3","#D95F02","#1B9E77","#D95F02","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#E7298A","#7570B3","#E7298A","#D95F02","#D95F02","#D95F02","#D95F02","#7570B3","#D95F02","#1B9E77","#D95F02","#1B9E77","#D95F02","#1B9E77","#1B9E77","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#1B9E77","#D95F02","#1B9E77","#1B9E77","#E7298A","#E7298A","#7570B3","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#1B9E77","#D95F02","#D95F02","#1B9E77","#1B9E77","#D95F02","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#1B9E77","#D95F02","#1B9E77","#1B9E77","#1B9E77"],"fillOpacity":0.2},null,null,null,null,null,{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]}],"limits":{"lat":[27.788498,48.943476],"lng":[-122.87744,-82.1508]}},"evals":[],"jsHooks":[]}</script>
 <p>This was much more challenging than expected.</p>
 </div>
 <div id="conclusion" class="section level2">
