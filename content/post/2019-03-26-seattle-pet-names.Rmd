@@ -1,0 +1,139 @@
+---
+title: Seattle Pet Names
+author: Kevin Putschko
+date: '2019-03-26'
+slug: seattle-pet-names
+categories:
+  - Data Viz
+tags:
+  - TidyTuesday
+---
+
+## Introduction
+
+```{r setup}
+knitr::opts_chunk$set(include = FALSE)
+pacman::p_load(tidyverse, kp.helpers, lubridate, sf, zipcode, leaflet)
+
+data_raw <- 
+  read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-03-26/seattle_pets.csv")
+```
+
+This week I'll be exploring the names of pets registered in Seattle, WA.  The data comes from the [TidyTuesday](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-03-26) weekly blog. 
+
+We see there are 7 columns and 52,519 rows, with columns relating to data, name, species, breed, and zip code.  
+
+```{r}
+data_raw %>% glimpse()
+```
+
+The first thing I notice is that the date is provided in character format.  Let's convert that to a date format instead.
+
+```{r dates}
+data_dates <- 
+  data_raw %>% 
+  mutate(license_issue_date = as.Date(license_issue_date, format = "%B %d %Y"))
+```
+
+Now let's take a look at a summary table.
+
+```{r summary}
+data_dates %>% fx_describe() %>% DT::datatable()
+```
+
+Alright! We see the dates range from 2003 to 2018, and that there are some missing values for secondary breed, name and zip code.
+
+With this in mind, let's take a look at 1) Name Popularity, and 2) Species Popularity by Zip Code.
+
+## Name Popularity 
+
+First of all, let's calculate the date.  Once that's done we see that the distirbution of names by date is heavily skewed to recent years.  This will adjust our plans.  
+
+```{r pet_names}
+data_dates %>% 
+  filter(!is.na(animals_name)) %>% 
+  mutate(year = year(license_issue_date)) %>% 
+  count(year) %>% 
+  ggplot(aes(x = factor(year), y = n)) +
+  geom_col() +
+  scale_y_log10() +
+  theme_kp() +
+  labs(x = "Year", y = "Count (Log10)", title = "Records per Year")
+```
+
+So, let's just dig into the top names!  
+
+```{r name_plot}
+data_name_plot <- 
+  data_dates %>% 
+  count(species, animals_name, sort = TRUE) %>% 
+  filter(n > 5) %>%
+  group_by(species) %>% 
+  top_n(10, n) %>%
+  replace_na(list(animals_name = "No Recorded Name")) %>% 
+  group_by(animals_name) %>% 
+  mutate(total_names = sum(n, na.rm = TRUE),
+         p = scales::percent(n / total_names, accuracy = 1),
+         label_coord = cumsum(n) - n/2)
+  
+data_name_plot %>% 
+  ggplot(aes(x = reorder(animals_name, total_names), y = n, fill = species)) +
+  geom_col(position = "stack", color = "black") +
+  geom_text(aes(y = label_coord, label = p), color = "white", size = 3, family = "sans") +
+  coord_flip() +
+  theme_kp() +
+  labs(x = NULL, y = "Count", fill = "Species", title = "Top 10 Names of Cats and Dogs")
+```
+
+We can see there are a handful of names that are used for both cats and dogs.  Interestingly, only cats have records without any given names.  I imagine this is due to catch and release programs that might exist in the Seattle area. 
+
+## Species by Region
+
+Now let's look at species by region.  I see that there are some registered pigs and goats, let's see where those are coming from while we're at it.
+
+```{r species}
+data_raw %>% 
+  count(species, sort = TRUE) %>% 
+  ggplot(aes(x = as_factor(species), y = n)) + 
+  geom_col() + 
+  scale_y_log10() + 
+  theme_kp() + 
+  labs(x = "Species", y = "Count (Log 10)", title = "Count of Species in Seattle Area")
+```
+
+This is actually my first time using leaflet, and only one of a handful of times that I've worked with data viz and maps.  Let's see how it goes! 
+
+```{r zips}
+data(zipcode)
+
+data_species <- 
+  data_raw %>% 
+  mutate_at(vars(species), as_factor) %>% 
+  count(zip_code, species, sort = TRUE) %>%   
+  inner_join(zipcode, by = c("zip_code" = "zip"))
+
+pal <- 
+  colorFactor(
+    palette = "Dark2", 
+    domain = data_species$species %>% unique())
+
+data_species %>% 
+  leaflet() %>% 
+  setView(lng = -122.3, lat = 47.6, zoom = 11) %>% 
+  addProviderTiles(providers$Wikimedia) %>% 
+  addCircleMarkers(lng = ~longitude, 
+                   lat = ~latitude, 
+                   color = ~pal(species),
+                   radius = ~n*0.02,
+                   weight = 1)
+  
+
+```
+
+This was much more challenging than expected.  
+
+## Conclusion
+
+What have I learned?  Maps are much more challenging to work with than I thought they would be.  I hit my three hour limit while trying to figure out how to use leaflet, but it was good practice.  Next time I'll try to add a legend so we know which color represents which species.
+
+That's all for now.  As always you can find the code on my [GitHub](https://github.com/kputschko/kp-blogdown/tree/master/content/post) page.

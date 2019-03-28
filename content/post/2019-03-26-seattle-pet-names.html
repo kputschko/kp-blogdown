@@ -1,0 +1,72 @@
+---
+title: Seattle Pet Names
+author: Kevin Putschko
+date: '2019-03-26'
+slug: seattle-pet-names
+categories:
+  - Data Viz
+tags:
+  - TidyTuesday
+---
+
+<script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
+<script src="/rmarkdown-libs/jquery/jquery.min.js"></script>
+<link href="/rmarkdown-libs/datatables-css/datatables-crosstalk.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/datatables-binding/datatables.js"></script>
+<link href="/rmarkdown-libs/dt-core/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="/rmarkdown-libs/dt-core/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/dt-core/js/jquery.dataTables.min.js"></script>
+<link href="/rmarkdown-libs/crosstalk/css/crosstalk.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/crosstalk/js/crosstalk.min.js"></script>
+<link href="/rmarkdown-libs/leaflet/leaflet.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet/leaflet.js"></script>
+<link href="/rmarkdown-libs/leafletfix/leafletfix.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4-compressed.js"></script>
+<script src="/rmarkdown-libs/Proj4Leaflet/proj4leaflet.js"></script>
+<link href="/rmarkdown-libs/rstudio_leaflet/rstudio_leaflet.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/leaflet-binding/leaflet.js"></script>
+<script src="/rmarkdown-libs/leaflet-providers/leaflet-providers.js"></script>
+<script src="/rmarkdown-libs/leaflet-providers-plugin/leaflet-providers-plugin.js"></script>
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<pre class="r"><code>knitr::opts_chunk$set(include = FALSE)
+pacman::p_load(tidyverse, kp.helpers, lubridate, sf, zipcode, leaflet)
+
+data_raw &lt;- 
+  read_csv(&quot;https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-03-26/seattle_pets.csv&quot;)</code></pre>
+<pre><code>## Parsed with column specification:
+## cols(
+##   license_issue_date = col_character(),
+##   license_number = col_character(),
+##   animals_name = col_character(),
+##   species = col_character(),
+##   primary_breed = col_character(),
+##   secondary_breed = col_character(),
+##   zip_code = col_character()
+## )</code></pre>
+<p>This week I’ll be exploring the names of pets registered in Seattle, WA. The data comes from the <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-03-26">TidyTuesday</a> weekly blog.</p>
+<p>We see there are 7 columns and 52,519 rows, with columns relating to data, name, species, breed, and zip code.</p>
+<p>The first thing I notice is that the date is provided in character format. Let’s convert that to a date format instead.</p>
+<p>Now let’s take a look at a summary table.</p>
+<p>Alright! We see the dates range from 2003 to 2018, and that there are some missing values for secondary breed, name and zip code.</p>
+<p>With this in mind, let’s take a look at 1) Name Popularity, and 2) Species Popularity by Zip Code.</p>
+</div>
+<div id="name-popularity" class="section level2">
+<h2>Name Popularity</h2>
+<p>First of all, let’s calculate the date. Once that’s done we see that the distirbution of names by date is heavily skewed to recent years. This will adjust our plans.</p>
+<p>So, let’s just dig into the top names!</p>
+<p>We can see there are a handful of names that are used for both cats and dogs. Interestingly, only cats have records without any given names. I imagine this is due to catch and release programs that might exist in the Seattle area.</p>
+</div>
+<div id="species-by-region" class="section level2">
+<h2>Species by Region</h2>
+<p>Now let’s look at species by region. I see that there are some registered pigs and goats, let’s see where those are coming from while we’re at it.</p>
+<p>This is actually my first time using leaflet, and only one of a handful of times that I’ve worked with data viz and maps. Let’s see how it goes!</p>
+<p>This was much more challenging than expected.</p>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>What have I learned? Maps are much more challenging to work with than I thought they would be. I hit my three hour limit while trying to figure out how to use leaflet, but it was good practice. Next time I’ll try to add a legend so we know which color represents which species.</p>
+<p>That’s all for now. As always you can find the code on my <a href="https://github.com/kputschko/kp-blogdown/tree/master/content/post">GitHub</a> page.</p>
+</div>
