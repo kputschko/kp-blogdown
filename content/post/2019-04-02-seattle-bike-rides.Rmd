@@ -1,0 +1,139 @@
+---
+title: Seattle Bike Rides
+author: Kevin Putschko
+date: '2019-04-02'
+slug: seattle-bike-rides
+categories:
+  - Data Viz
+tags:
+  - TidyTuesday
+---
+
+## Introduction
+
+Today we'll be exploring Seattle Bike Rides!  As usual, the data comes from the [Tidy Tuesday](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-04-02) blog.  The data comes from scanners set up at 7 different locations around Seattle.  It is important to note that those who gathered this data report varying quality between the scanners and their locations, noting that some heavy use areas have no scanners at all.
+
+```{r intro, echo=TRUE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, paged.print = TRUE)
+
+# pak::pkg_install("kputschko/kp.helpers")
+pacman::p_load(tidyverse, kp.helpers, lubridate, ggridges)
+
+data_raw <- 
+  readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-04-02/bike_traffic.csv",
+                  col_types = cols(
+                    date = col_datetime(format = "%m/%d/%Y %I:%M:%S %p"),
+                    crossing = col_character(),
+                    direction = col_character(),
+                    bike_count = col_double(),
+                    ped_count = col_double()
+                  ))
+
+data_raw %>% glimpse()
+```
+
+Loading the data, we see 515k rows and 5 variables.  We have date, crossing, direction, bike count, and pedestrian count.  
+
+```{r summary}
+# My fx_describe function does not work with datetime!
+data_raw %>% select(-date) %>% kp.helpers::fx_describe() %>% DT::datatable()
+```
+
+## Summaries
+
+Let's look at each of these columns.  We see that crossing refers to the location where the tallies are captured.  Direction refers to the direction of the biker or pedestrian.  Finally, the distribution of bikers and riders is as expected, with many more low counts, but with high values stretching into the extremes.  
+
+```{r summary-depth}
+data_raw %>% 
+  count(crossing) %>% 
+  ggplot(aes(x = reorder(crossing, n), y = n)) +
+  geom_col() +
+  coord_flip() +
+  theme_kp()
+  
+data_raw %>% 
+  count(direction) %>% 
+  ggplot(aes(x = reorder(direction, n), y = n)) +
+  geom_col() +
+  coord_flip() +
+  theme_kp()
+
+data_raw %>% 
+  ggplot(aes(x = bike_count)) + 
+  geom_density() + 
+  scale_x_sqrt() + 
+  theme_kp() + 
+  labs(x = "Sqrt of Bike Count", y = "% Density", title = "Bike Count Distribution")
+
+data_raw %>% 
+  ggplot(aes(x = ped_count)) +
+  geom_density() +
+  scale_x_sqrt() +
+  theme_kp() +
+  labs(x = "Sqrt of Ped Count", y = "% Density", title = "Pedestrian Count Distribution")
+```
+
+
+## Daily Data
+
+Let's start at the top and work our way into the details.  How has the number of bikers and pedestrians changed over the range of data?  
+
+```{r dailies, message=FALSE, warning=FALSE, paged.print=TRUE}
+data_datetime <-
+  data_raw %>%
+  mutate(day = date(date),
+         hour = hour(date))
+
+data_plot_daily <- 
+  data_datetime %>%
+  group_by(date) %>% 
+  summarise(bikes = sum(bike_count, na.rm = TRUE),
+            pedestrians = sum(ped_count, na.rm = TRUE)) %>% 
+  gather(type, count, -date) %>% 
+  ungroup()
+
+data_plot_daily %>% 
+  ggplot(aes(x = date, y = count, color = type)) +
+  geom_smooth(se = FALSE, span = .10) +
+  theme_kp()
+
+```
+
+We can see that ridership fluctuates regurlary, probably seasonally, and that overall ridership seems to be trending downward.  Interestingly, pedestrian usage of the walkway dipped considerably between 2016 and 2018.  I wonder why that is.
+
+## Hourly Data
+
+For my last exercise, I'm going to create a heatmap by hour.  Let's see what happens!  I had to separate the plots because I wanted a unique sorting by scanned location.  I think it turned out alright!
+
+```{r hourly}
+
+plot_heatmap <- 
+  data_datetime %>% 
+  group_by(crossing, hour) %>% 
+  summarise(bikes = sum(bike_count, na.rm = TRUE),
+            peds = sum(ped_count, na.rm = TRUE)) %>% 
+  gather(type, n, bikes:peds) %>% 
+  ungroup() %>% 
+  nest(-type) %>% 
+  mutate(plot = 
+           map2(data, type,  
+               ~ .x %>% 
+                 ggplot(aes(x = as_factor(hour), y = reorder(crossing, n), fill = sqrt(n))) +
+                 geom_tile() +
+                 coord_fixed() +
+                 scale_fill_viridis_c(option = "C") +
+                 theme_kp() +
+                 labs(x = NULL, y = NULL, fill = "Count (sqrt)", title = str_glue("Traffic Scans by Hour for '{.y}'"))
+           )
+  )
+
+
+plot_heatmap$plot[[1]]
+plot_heatmap$plot[[2]]
+```
+
+## Conclusion
+
+The data appears to be incomplete! There is a questions of how much use these areas actually get, especially if city council were considering which areas were in need of expanded pedestrian and bicycle traffic lanes and protections.
+
+Welp, that's all for now.  As always the code will be available on my [GitHub](https://github.com/kputschko/kp-blogdown/tree/master/content/post) page.  

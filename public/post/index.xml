@@ -6,10 +6,20 @@
     <description>Recent content in Posts on Putschko &#43; R</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 26 Mar 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 02 Apr 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Seattle Bike Rides</title>
+      <link>/2019/04/02/seattle-bike-rides/</link>
+      <pubDate>Tue, 02 Apr 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/04/02/seattle-bike-rides/</guid>
+      <description>IntroductionToday we’ll be exploring Seattle Bike Rides! As usual, the data comes from the Tidy Tuesday blog. The data comes from scanners set up at 7 different locations around Seattle. It is important to note that those who gathered this data report varying quality between the scanners and their locations, noting that some heavy use areas have no scanners at all.
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, paged.</description>
+    </item>
     
     <item>
       <title>Seattle Pet Names</title>
