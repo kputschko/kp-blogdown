@@ -1,0 +1,164 @@
+---
+title: The Best Anime of All Time
+author: Kevin Putschko
+date: '2019-04-24'
+slug: the-best-anime-of-all-time
+categories:
+  - Data Viz
+  - R
+tags:
+  - TidyTuesday
+---
+
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>This data comes from My Anime List, courtesy of <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-04-23">TidyTuesday</a>. Here’s the excerpt from the site:</p>
+<p>“MyAnimeList, often abbreviated as MAL, is an anime and manga social networking and social cataloging application website. The site provides its users with a list-like system to organize and score anime and manga. It facilitates finding users who share similar tastes and provides a large database on anime and manga. The site claims to have 4.4 million anime and 775,000 manga entries. In 2015, the site received 120 million visitors a month.”</p>
+<p>Anime without rankings or popularity scores were excluded. Producers, genre, and studio were converted from lists to tidy observations, so there will be repetitions of shows with multiple producers, genres, etc. The raw data is also uploaded.</p>
+</div>
+<div id="summaries" class="section level2">
+<h2>Summaries</h2>
+<p>Let’s get into it! We have 78k rows and 27 columns. The columns I’m interested in exploring are <code>type</code>, <code>score</code>, <code>rank</code>, <code>popularity</code>, <code>start_date</code>, and <code>end_date</code>.</p>
+<pre class="r"><code>data_tidy %&gt;% names()</code></pre>
+<pre><code>##  [1] &quot;animeID&quot;        &quot;name&quot;           &quot;title_english&quot;  &quot;title_japanese&quot;
+##  [5] &quot;title_synonyms&quot; &quot;type&quot;           &quot;source&quot;         &quot;producers&quot;     
+##  [9] &quot;genre&quot;          &quot;studio&quot;         &quot;episodes&quot;       &quot;status&quot;        
+## [13] &quot;airing&quot;         &quot;start_date&quot;     &quot;end_date&quot;       &quot;duration&quot;      
+## [17] &quot;rating&quot;         &quot;score&quot;          &quot;scored_by&quot;      &quot;rank&quot;          
+## [21] &quot;popularity&quot;     &quot;members&quot;        &quot;favorites&quot;      &quot;synopsis&quot;      
+## [25] &quot;background&quot;     &quot;premiered&quot;      &quot;broadcast&quot;      &quot;related&quot;</code></pre>
+<pre class="r"><code>data_tidy %&gt;% count(type)</code></pre>
+<pre><code>## # A tibble: 7 x 2
+##   type        n
+##   &lt;chr&gt;   &lt;int&gt;
+## 1 Movie   12369
+## 2 Music    1775
+## 3 ONA      3652
+## 4 OVA     10780
+## 5 Special  7336
+## 6 TV      41997
+## 7 Unknown     2</code></pre>
+<p>I’ll choose to focus on TV anime, and rather than specials, movies, or OVAs (original video animation; usually shorter series with only a few episodes).</p>
+</div>
+<div id="research-questions" class="section level2">
+<h2>Research Questions</h2>
+<div id="cowboy-bebop" class="section level3">
+<h3>Cowboy Bebop</h3>
+<p>Because Cowboy Bebop is an anime I am very familiar with, I’ll start with this as my base case and see how the analysis can be applied more generally.</p>
+<pre class="r"><code>data_cb &lt;- 
+  data_tidy %&gt;% 
+  filter(type == &quot;TV&quot;, 
+         str_detect(name, &quot;Cowboy Bebop&quot;)) %&gt;% 
+  print()</code></pre>
+<pre><code>## # A tibble: 6 x 28
+##   animeID name  title_english title_japanese title_synonyms type  source
+##     &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;         &lt;chr&gt;          &lt;chr&gt;          &lt;chr&gt; &lt;chr&gt; 
+## 1       1 Cowb~ Cowboy Bebop  &lt;U+30AB&gt;&lt;U+30A6&gt;&lt;U+30DC&gt;&lt;U+30FC&gt;&lt;U+30A4&gt;&lt;U+30D3&gt;&lt;U+30D0&gt;&lt;U+30C3&gt;&lt;U+30D7&gt;~ []             TV    Origi~
+## 2       1 Cowb~ Cowboy Bebop  &lt;U+30AB&gt;&lt;U+30A6&gt;&lt;U+30DC&gt;&lt;U+30FC&gt;&lt;U+30A4&gt;&lt;U+30D3&gt;&lt;U+30D0&gt;&lt;U+30C3&gt;&lt;U+30D7&gt;~ []             TV    Origi~
+## 3       1 Cowb~ Cowboy Bebop  &lt;U+30AB&gt;&lt;U+30A6&gt;&lt;U+30DC&gt;&lt;U+30FC&gt;&lt;U+30A4&gt;&lt;U+30D3&gt;&lt;U+30D0&gt;&lt;U+30C3&gt;&lt;U+30D7&gt;~ []             TV    Origi~
+## 4       1 Cowb~ Cowboy Bebop  &lt;U+30AB&gt;&lt;U+30A6&gt;&lt;U+30DC&gt;&lt;U+30FC&gt;&lt;U+30A4&gt;&lt;U+30D3&gt;&lt;U+30D0&gt;&lt;U+30C3&gt;&lt;U+30D7&gt;~ []             TV    Origi~
+## 5       1 Cowb~ Cowboy Bebop  &lt;U+30AB&gt;&lt;U+30A6&gt;&lt;U+30DC&gt;&lt;U+30FC&gt;&lt;U+30A4&gt;&lt;U+30D3&gt;&lt;U+30D0&gt;&lt;U+30C3&gt;&lt;U+30D7&gt;~ []             TV    Origi~
+## 6       1 Cowb~ Cowboy Bebop  &lt;U+30AB&gt;&lt;U+30A6&gt;&lt;U+30DC&gt;&lt;U+30FC&gt;&lt;U+30A4&gt;&lt;U+30D3&gt;&lt;U+30D0&gt;&lt;U+30C3&gt;&lt;U+30D7&gt;~ []             TV    Origi~
+## # ... with 21 more variables: producers &lt;chr&gt;, genre &lt;chr&gt;, studio &lt;chr&gt;,
+## #   episodes &lt;dbl&gt;, status &lt;chr&gt;, airing &lt;lgl&gt;, start_date &lt;date&gt;,
+## #   end_date &lt;date&gt;, duration &lt;chr&gt;, rating &lt;chr&gt;, score &lt;dbl&gt;,
+## #   scored_by &lt;dbl&gt;, rank &lt;dbl&gt;, popularity &lt;dbl&gt;, members &lt;dbl&gt;,
+## #   favorites &lt;dbl&gt;, synopsis &lt;chr&gt;, background &lt;chr&gt;, premiered &lt;chr&gt;,
+## #   broadcast &lt;chr&gt;, related &lt;chr&gt;</code></pre>
+<p>Interesting, I see that there is one row per genre title. Let’s collapse that to get one row per show.</p>
+<pre class="r"><code>data_cb_tidy &lt;- 
+  data_cb %&gt;% 
+  select(title_english, studio, episodes, start_date, end_date, score, scored_by, rank, popularity) %&gt;% 
+  distinct() %&gt;% 
+  print()</code></pre>
+<pre><code>## # A tibble: 1 x 9
+##   title_english studio episodes start_date end_date   score scored_by  rank
+##   &lt;chr&gt;         &lt;chr&gt;     &lt;dbl&gt; &lt;date&gt;     &lt;date&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;
+## 1 Cowboy Bebop  Sunri~       26 1998-04-03 1999-04-02  8.81    405664    26
+## # ... with 1 more variable: popularity &lt;dbl&gt;</code></pre>
+</div>
+<div id="top-100-shows" class="section level3">
+<h3>Top 100 Shows</h3>
+<p>Because the <code>rank</code> and <code>popularity</code> columns are probably quite related, i’ll include the shows that are in either of the top 100 for these columns. Based on the data documentation, rank is determined by weighted user scores, while popularity is based on how many users have the anime listed in one of their favorite/saved/watch-later lists.</p>
+<pre class="r"><code>data_top &lt;- 
+  data_tidy %&gt;% 
+  filter(type == &quot;TV&quot;, 
+         rank &lt;= 100 | popularity &lt;= 100) %&gt;% 
+  select(name, title_english, studio, episodes, start_date, end_date, score, scored_by, rank, popularity) %&gt;% 
+  distinct() %&gt;% 
+  arrange(rank) %&gt;% 
+  print()</code></pre>
+<pre><code>## # A tibble: 152 x 10
+##    name  title_english studio episodes start_date end_date   score
+##    &lt;chr&gt; &lt;chr&gt;         &lt;chr&gt;     &lt;dbl&gt; &lt;date&gt;     &lt;date&gt;     &lt;dbl&gt;
+##  1 Full~ Fullmetal Al~ Bones        64 2009-04-05 NA          9.24
+##  2 Stei~ Steins;Gate   White~       24 2011-04-06 2011-09-01  9.14
+##  3 Gint~ Gintama Seas~ Banda~       51 2015-04-08 2016-03-03  9.13
+##  4 Hunt~ Hunter x Hun~ Madho~      148 2011-10-02 2014-09-02  9.12
+##  5 Gint~ Gintama Seas~ Sunri~       51 2011-04-04 2012-03-02  9.1 
+##  6 Gint~ Gintama: Enc~ Sunri~       13 2012-10-04 2013-03-02  9.05
+##  7 3-ga~ March Comes ~ Shaft        22 2017-10-14 2018-03-03  9.04
+##  8 Clan~ Clannad ~Aft~ Kyoto~       24 2008-10-03 2009-03-02  9   
+##  9 Gint~ Gintama       Sunri~      201 2006-04-04 2010-03-02  9   
+## 10 Gint~ Gintama Seas~ Banda~       12 2017-01-09 2017-03-02  9   
+## # ... with 142 more rows, and 3 more variables: scored_by &lt;dbl&gt;,
+## #   rank &lt;dbl&gt;, popularity &lt;dbl&gt;</code></pre>
+<div id="rank-by-year" class="section level4">
+<h4>Rank by Year</h4>
+<p>Here we see that the ranked shows are disproprotionately from the last decade, though anime has been popular in Japan since the 40s, and popular internationally since the 90s.</p>
+<pre class="r"><code>data_top %&gt;% 
+  ggplot() +
+  aes(x = start_date, y = score, size = scored_by) +
+  geom_point(alpha = 0.25) + 
+  scale_y_continuous(limits = c(5, 10)) +
+  guides(size = &quot;none&quot;) +
+  theme_kp()</code></pre>
+<p><img src="/post/2019-04-24-the-best-anime-of-all-time_files/figure-html/year_plot-1.png" width="672" /></p>
+</div>
+<div id="studio-ranking" class="section level4">
+<h4>Studio Ranking</h4>
+<p>Let’s take a look at how each studio’s work stacks up.</p>
+<pre class="r"><code>data_top %&gt;% 
+  add_count(studio) %&gt;% 
+  filter(n &gt; 5) %&gt;% 
+  group_by(studio) %&gt;% 
+  mutate(iqr = IQR(score),
+         min = min(score)) %&gt;% 
+  
+
+  ggplot() +
+  aes(x = reorder(studio, min), y = score) +
+  geom_violin(scale = &quot;width&quot;, fill = &quot;gray90&quot;, color = &quot;transparent&quot;, trim = FALSE) +
+  geom_jitter(width = 0.10, height = 0, alpha = 0.50) +
+  coord_flip() +
+  theme_kp() +
+  labs(x = &quot;Anime Studio&quot;, y = &quot;Aggregate Score&quot;)</code></pre>
+<p><img src="/post/2019-04-24-the-best-anime-of-all-time_files/figure-html/studio-1.png" width="672" /></p>
+<p>Looks like Sunrise is most consistently in the top scored anime, when looking only at the Top 100 anime based on score and popularity.</p>
+</div>
+<div id="sunrise-studio" class="section level4">
+<h4>Sunrise Studio</h4>
+<p>Let’s look at all of Sunrise Studio’s work.</p>
+<pre class="r"><code>data_tidy %&gt;% 
+  filter(type == &quot;TV&quot;,
+         studio == &quot;Sunrise&quot;) %&gt;% 
+  distinct(name, title_english, studio, episodes, start_date, end_date, score, scored_by, rank, popularity) %&gt;% 
+  
+  ggplot() +
+  aes(x = start_date, y = score, alpha = 1/popularity, size = scored_by) +
+  geom_point() +
+  theme_kp() +
+  guides(alpha = &quot;none&quot;, size = &quot;none&quot;) +
+  labs(x = &quot;Premiere Date&quot;, y = &quot;Aggregate Score&quot;, title = &quot;Sunrise Studios&quot;, caption = &quot;Note: Larger and darker bubbles have more reviews and are more popular&quot;) </code></pre>
+<p><img src="/post/2019-04-24-the-best-anime-of-all-time_files/figure-html/Sunrise-1.png" width="672" /></p>
+<p>This paints a very different picture! Sunrise has been in the business since the early 1980’s and their work has garnered more reviews as time goes one, but their highest ranked and most popular shows debuted between 2005 and 2015.</p>
+</div>
+</div>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>This was fun. I haven’t worked with violin plots in a while. I even tried working with <code>ggforce</code> but couldn’t get it to work properly. I’ll have to devote some more time to exploring that package.</p>
+<p>As always, my code is available on <a href="https://github.com/kputschko/kp-blogdown/tree/master/content/post">GitHub</a>.</p>
+</div>

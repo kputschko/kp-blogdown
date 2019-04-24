@@ -6,10 +6,20 @@
     <description>Recent content in R on Putschko &#43; R</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 25 Jan 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 24 Apr 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/categories/r/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>The Best Anime of All Time</title>
+      <link>/2019/04/24/the-best-anime-of-all-time/</link>
+      <pubDate>Wed, 24 Apr 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/04/24/the-best-anime-of-all-time/</guid>
+      <description>IntroductionThis data comes from My Anime List, courtesy of TidyTuesday. Here’s the excerpt from the site:
+“MyAnimeList, often abbreviated as MAL, is an anime and manga social networking and social cataloging application website. The site provides its users with a list-like system to organize and score anime and manga. It facilitates finding users who share similar tastes and provides a large database on anime and manga. The site claims to have 4.</description>
+    </item>
     
     <item>
       <title>Hello World!</title>

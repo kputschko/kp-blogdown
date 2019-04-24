@@ -79,7 +79,7 @@ Because Cowboy Bebop is an anime I am very familiar with, I'll start with this a
 data_cb <- 
   data_tidy %>% 
   filter(type == "TV", 
-         str_detect(name, "Cowboy Bebop")) %>% view()
+         str_detect(name, "Cowboy Bebop")) %>% 
   print()
 ```
 
