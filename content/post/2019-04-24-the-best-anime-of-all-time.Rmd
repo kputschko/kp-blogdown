@@ -1,0 +1,174 @@
+---
+title: The Best Anime of All Time
+author: Kevin Putschko
+date: '2019-04-24'
+slug: the-best-anime-of-all-time
+categories:
+  - Data Viz
+  - R
+tags:
+  - TidyTuesday
+---
+
+```{r Setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, paged.print = TRUE)
+
+pacman::p_load(tidyverse, kp.helpers, ggforce)
+
+data_tidy <- 
+  read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-04-23/tidy_anime.csv",
+           col_types = cols(
+             animeID = col_double(),
+             name = col_character(),
+             title_english = col_character(),
+             title_japanese = col_character(),
+             title_synonyms = col_character(),
+             type = col_character(),
+             source = col_character(),
+             producers = col_character(),
+             genre = col_character(),
+             studio = col_character(),
+             episodes = col_double(),
+             status = col_character(),
+             airing = col_logical(),
+             start_date = col_date(format = ""),
+             end_date = col_date(format = ""),
+             duration = col_character(),
+             rating = col_character(),
+             score = col_double(),
+             scored_by = col_double(),
+             rank = col_double(),
+             popularity = col_double(),
+             members = col_double(),
+             favorites = col_double(),
+             synopsis = col_character(),
+             background = col_character(),
+             premiered = col_character(),
+             broadcast = col_character(),
+             related = col_character()
+           ))
+```
+
+## Introduction
+
+This data comes from My Anime List, courtesy of [TidyTuesday](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-04-23).  Here's the excerpt from the site:
+
+"MyAnimeList, often abbreviated as MAL, is an anime and manga social networking and social cataloging application website. The site provides its users with a list-like system to organize and score anime and manga. It facilitates finding users who share similar tastes and provides a large database on anime and manga. The site claims to have 4.4 million anime and 775,000 manga entries. In 2015, the site received 120 million visitors a month."
+
+Anime without rankings or popularity scores were excluded. Producers, genre, and studio were converted from lists to tidy observations, so there will be repetitions of shows with multiple producers, genres, etc. The raw data is also uploaded.
+
+## Summaries
+
+Let's get into it!  We have 78k rows and 27 columns.  The columns I'm interested in exploring are `type`, `score`, `rank`, `popularity`, `start_date`, and `end_date`.
+
+```{r names}
+data_tidy %>% names()
+
+data_tidy %>% count(type)
+```
+
+I'll choose to focus on TV anime, and rather than specials, movies, or OVAs (original video animation; usually shorter series with only a few episodes).
+
+## Research Questions
+
+### Cowboy Bebop
+
+Because Cowboy Bebop is an anime I am very familiar with, I'll start with this as my base case and see how the analysis can be applied more generally.
+
+```{r CB}
+data_cb <- 
+  data_tidy %>% 
+  filter(type == "TV", 
+         str_detect(name, "Cowboy Bebop")) %>% view()
+  print()
+```
+
+Interesting, I see that there is one row per genre title.  Let's collapse that to get one row per show.  
+
+```{r CB_tidy, paged.print=TRUE}
+data_cb_tidy <- 
+  data_cb %>% 
+  select(title_english, studio, episodes, start_date, end_date, score, scored_by, rank, popularity) %>% 
+  distinct() %>% 
+  print()
+```
+
+### Top 100 Shows
+
+Because the `rank` and `popularity` columns are probably quite related, i'll include the shows that are in either of the top 100 for these columns.  Based on the data documentation, rank is determined by weighted user scores, while popularity is based on how many users have the anime listed in one of their favorite/saved/watch-later lists.
+
+```{r top 100}
+data_top <- 
+  data_tidy %>% 
+  filter(type == "TV", 
+         rank <= 100 | popularity <= 100) %>% 
+  select(name, title_english, studio, episodes, start_date, end_date, score, scored_by, rank, popularity) %>% 
+  distinct() %>% 
+  arrange(rank) %>% 
+  print()
+```
+
+#### Rank by Year
+
+Here we see that the ranked shows are disproprotionately from the last decade, though anime has been popular in Japan since the 40s, and popular internationally since the 90s.
+
+```{r year_plot}
+data_top %>% 
+  ggplot() +
+  aes(x = start_date, y = score, size = scored_by) +
+  geom_point(alpha = 0.25) + 
+  scale_y_continuous(limits = c(5, 10)) +
+  guides(size = "none") +
+  theme_kp()
+```
+
+#### Studio Ranking
+
+Let's take a look at how each studio's work stacks up.
+
+```{r studio}
+data_top %>% 
+  add_count(studio) %>% 
+  filter(n > 5) %>% 
+  group_by(studio) %>% 
+  mutate(iqr = IQR(score),
+         min = min(score)) %>% 
+  
+
+  ggplot() +
+  aes(x = reorder(studio, min), y = score) +
+  geom_violin(scale = "width", fill = "gray90", color = "transparent", trim = FALSE) +
+  geom_jitter(width = 0.10, height = 0, alpha = 0.50) +
+  coord_flip() +
+  theme_kp() +
+  labs(x = "Anime Studio", y = "Aggregate Score")
+```
+
+Looks like Sunrise is most consistently in the top scored anime, when looking only at the Top 100 anime based on score and popularity.
+
+#### Sunrise Studio
+
+Let's look at all of Sunrise Studio's work. 
+
+```{r Sunrise}
+data_tidy %>% 
+  filter(type == "TV",
+         studio == "Sunrise") %>% 
+  distinct(name, title_english, studio, episodes, start_date, end_date, score, scored_by, rank, popularity) %>% 
+  
+  ggplot() +
+  aes(x = start_date, y = score, alpha = 1/popularity, size = scored_by) +
+  geom_point() +
+  theme_kp() +
+  guides(alpha = "none", size = "none") +
+  labs(x = "Premiere Date", y = "Aggregate Score", title = "Sunrise Studios", caption = "Note: Larger and darker bubbles have more reviews and are more popular") 
+```
+
+This paints a very different picture! Sunrise has been in the business since the early 1980's and their work has garnered more reviews as time goes one, but their highest ranked and most popular shows debuted between 2005 and 2015.  
+
+## Conclusion
+
+This was fun.  I haven't worked with violin plots in a while.  I even tried working with `ggforce` but couldn't get it to work properly.  I'll have to devote some more time to exploring that package.  
+
+
+As always, my code is available on [GitHub](https://github.com/kputschko/kp-blogdown/tree/master/content/post).
