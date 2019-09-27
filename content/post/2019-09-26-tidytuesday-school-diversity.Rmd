@@ -1,0 +1,82 @@
+---
+title: TidyTuesday - School Diversity
+author: Kevin Putschko
+date: '2019-09-26'
+slug: tidytuesday-school-diversity
+categories:
+  - R
+tags:
+  - TidyTuesday
+---
+
+```{r setup}
+pacman::p_load(tidyverse, colorspace)
+
+data <- 
+  read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-09-24/school_diversity.csv")
+```
+
+Hello!
+
+Welcome back! It's been a while since I've written a blog post. So let's get started, shall we.
+
+### Introduction
+
+This data comes from the Tidy Tuesday website, dealing with school diversity across the USA.  Let's begin by taking a look a the data.  The data pertains to two school years, the 1994-95 year and 2016-17 school year.  Perhaps we can do a simple comparison of the two years for Michigan.
+
+```{r}
+data %>% glimpse()
+data %>% count(SCHOOL_YEAR)
+```
+
+### Research Question
+
+How has school diversity changed in Michigan between 1994 and 2016?
+
+```{r}
+data %>% 
+  filter(ST == "MI") %>% 
+  separate(d_Locale_Txt, into = c("Location", "Designation")) %>% 
+  pivot_longer(cols = AIAN:Multi, names_to = "Ethnicity", values_to = "Proportion") %>% 
+  group_by(SCHOOL_YEAR, Location, Ethnicity) %>% 
+  summarise(Proportion = mean(Proportion, na.rm = TRUE)) %>%
+  pivot_wider(names_from = SCHOOL_YEAR, values_from = Proportion) %>% 
+  filter(!is.na(Location)) %>% 
+  
+  ggplot() +
+  aes(x = Ethnicity) +
+  geom_segment(aes(y = `1994-1995`, yend = `2016-2017`, 
+                   x = Ethnicity, xend = Ethnicity), 
+               size = 3.5, 
+               color = "grey80") +
+  geom_point(aes(y = `1994-1995`), 
+             fill = "#fc8d59", color = darken("#fc8d59", 0.30), 
+             size = 3, shape = 21) +
+  geom_point(aes(y = `2016-2017`),
+             fill = "#99d594", color = darken("#99d594", 0.30), 
+             size = 3, shape = 21) +
+  geom_text(data = . %>% filter(Ethnicity == "White", Location == "city"), 
+            mapping = aes(x = Ethnicity, y = `1994-1995`),
+            label = "1994/95", 
+            color = "#fc8d59",
+            fontface = "bold",
+            vjust = 2) +
+  facet_wrap("Location", labeller = labeller(Location = str_to_title)) +
+  geom_text(data = . %>% filter(Ethnicity == "White", Location == "city"), 
+            mapping = aes(x = Ethnicity, y = `2016-2017`),
+            label = "2016/17", 
+            color = "#99d594",
+            fontface = "bold",
+            vjust = 2) +
+  facet_wrap("Location", labeller = labeller(Location = str_to_title)) +
+  coord_flip() +
+  theme_minimal() +
+  labs(x = NULL, y = "Proportion", 
+       title = "Ethnic Diversity in Michigan Schools", subtitle = "By Location",
+       caption = "Source: National Center for Education Statistics\nGraph adopted from @Mathl3t3")
+```
+
+### Conclusion
+
+Time is short this week, so I'll leave it there for now.  I'll be back with more next time! As always the code will be available on my [GitHub](https://github.com/kputschko/kp-blogdown/tree/master/content/post) page.  
+
